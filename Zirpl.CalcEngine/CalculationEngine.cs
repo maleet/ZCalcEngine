@@ -107,8 +107,10 @@ namespace Zirpl.CalcEngine
         /// method and then using the Expression.Evaluate method to evaluate
         /// the parsed expression.
         /// </remarks>
-		public object Evaluate(string expression)
-		{
+		public object Evaluate(string expression, bool throwOnInvalidBindingExpression = true)
+	    {
+		    ThrowOnInvalidBindingExpression = throwOnInvalidBindingExpression;
+			
             var x = _cache != null
                 ? _cache[expression]
                 : Parse(expression);
@@ -119,9 +121,9 @@ namespace Zirpl.CalcEngine
         /// </summary>
         /// <param name="expression">Expression to evaluate.</param>
         /// <returns>The value of the expression.</returns>
-        public T Evaluate<T>(string expression)
+        public T Evaluate<T>(string expression, bool throwOnInvalidBindingExpression = true)
         {
-            return (T)Evaluate(expression);
+            return (T)Evaluate(expression, throwOnInvalidBindingExpression);
         }
 
 		public object Validate(string expression)
@@ -297,7 +299,8 @@ namespace Zirpl.CalcEngine
         }
 
 	    public bool InValidation { get; set; }
-
+		public bool ThrowOnInvalidBindingExpression { get; set; } = true;
+		
 	    #endregion
 
         //---------------------------------------------------------------------------

@@ -49,7 +49,10 @@ namespace Zirpl.CalcEngine
                 if (obj == null && _ce.InValidation)
                 {
                     var propertyInfo = prevObj.GetType().GetProperty(bi.Name, bf);
-                    obj = CreateInstance(propertyInfo.PropertyType);
+                    if (propertyInfo != null)
+                    {
+                        obj = CreateInstance(propertyInfo.PropertyType);    
+                    }
                 }
 
                 if (obj == null)
@@ -71,7 +74,7 @@ namespace Zirpl.CalcEngine
                 if (!isGenericList && bi.PropertyInfo == null)
                 {
                     var s = GetBindingPath(_bindingPath, index);
-                    throw new CalcEngineBindingException($"'{bi.Name}' is not valid property of {type.Name} in path '{s}'", prevObj, initialObj, s, type, _bindingPath);
+                    throw new CalcEngineBindingException($"'{bi.Name}' is not valid property of {type.Name} in path '{s}'", obj, prevObj, initialObj, s, type, _bindingPath);
                 }
 
                 prevObj = obj;
@@ -141,6 +144,12 @@ namespace Zirpl.CalcEngine
                             }
                             else
                             {
+                                if (_ce.ThrowOnInvalidBindingExpression)
+                                {
+                                    var s = GetBindingPath(_bindingPath, index);
+                                    
+                                    throw new CalcEngineBindingException($"'{bi.Name}' of {type.Name} don't have key(s) '{string.Join("; ", list.Select(o1 => o1.ToString()))}'", obj, prevObj, initialObj, s, type, _bindingPath);
+                                }
                                 obj = CreateInstance(bi.PropertyInfoItem.PropertyType);
                             }
                         }

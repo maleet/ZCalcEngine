@@ -6,6 +6,7 @@ namespace Zirpl.CalcEngine
     public class CalcEngineBindingException : ArgumentException
     {
         private readonly List<BindingInfo> _bindingPath;
+        public object Current { get; }
         public string FullPath { get; }
         public Type Type { get; }
 
@@ -27,9 +28,10 @@ namespace Zirpl.CalcEngine
             Initial = initialObj;
         }
 
-        internal CalcEngineBindingException(string message, object previousObj, object initialObj, string fullPath, Type type, List<BindingInfo> bindingPath) : this(message, previousObj, initialObj)
+        internal CalcEngineBindingException(string message, object currentObj, object previousObj, object initialObj, string fullPath, Type type, List<BindingInfo> bindingPath) : this(message, previousObj, initialObj)
         {
             _bindingPath = bindingPath;
+            Current = currentObj;
             FullPath = fullPath;
             Type = type;
         }
