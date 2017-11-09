@@ -55,10 +55,17 @@ namespace Zirpl.CalcEngine.Portable.Tests
 			engine.Test("Name.Length * 2", p.Name.Length * 2);
             engine.Test("Children.Count", p.Children.Count);
             engine.Test("Children(2).Name", p.Children[2].Name);
-            engine.Test("Parent.ChildrenDct(\"Test Child 2\").Name", p.ChildrenDct["Test Child 2"].Name);
+            engine.Test("ChildrenDct(\"Test Child 2\").Name", p.ChildrenDct["Test Child 2"].Name);
 			engine.Test("ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
-	        engine.Test("Parent.ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
-			engine.Test("ChildrenIdDct('16C5888C-6C75-43DD-A372-2A3398DAE038').Name", p.ChildrenDct["Test Child 1"].Name);
+	        Assert.Throws<CalcEngineBindingException>(() =>
+	        {
+		        var d = engine.Evaluate<double>("ChildrenObjectDct('Test Child 10') * 2");
+	        });
+	        
+	        Assert.AreEqual(0, engine.Evaluate<double>("ChildrenObjectDct('Test Child 10') * 2", false));
+	        Assert.AreEqual(2, engine.Evaluate<double>("ChildrenObjectDct('Test Child 10') + 2", false));
+
+	        engine.Test("ChildrenIdDct('16C5888C-6C75-43DD-A372-2A3398DAE038').Name", p.ChildrenDct["Test Child 1"].Name);
 			engine.Test("ChildrenDct.Count", p.ChildrenDct.Count);
             engine.DataContext = dc;
 
@@ -66,7 +73,7 @@ namespace Zirpl.CalcEngine.Portable.Tests
 
 
             // COMPARE TESTS
-            engine.Test("5=5"   , true);
+	        engine.Test("5=5"   , true);
 			engine.Test("'2'='2'", true);
 			engine.Test("5==5"  , true);
             engine.Test("6==5"  , false);
@@ -79,6 +86,7 @@ namespace Zirpl.CalcEngine.Portable.Tests
             // LOGICAL FUNCTION TESTS
 
             engine.Test("5<=6.0 && 6>=3"  , true);
+	        engine.Test("true"   , true);
             engine.Test("true  && true"   , true);
             engine.Test("true  && false"  , false);
             engine.Test("false && true"   , false);

@@ -99,9 +99,15 @@ namespace Zirpl.CalcEngine
                 return 0;
             }
 
+            if (Type.GetTypeCode(v.GetType()) == TypeCode.Object)
+            {
+                return 0;
+            }
+
             // handle everything else
             return (double)Convert.ChangeType(v, typeof(double), _ci);
         }
+        
         public static implicit operator bool(Expression x)
         {
             // evaluate

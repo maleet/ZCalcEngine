@@ -14,10 +14,13 @@ namespace Zirpl.CalcEngine.Portable.Tests
         }
         public string Name { get; set; }
         public bool Male { get; set; }
-        public DateTime Birth { get; set; }
+        public DateTime? Birth { get; set; }
+
 	    public Address Address { get; set; }
 	    public TestPerson Parent { get; set; }
         public List<TestPerson> Children { get; set; }
+
+	    public int? Age => Birth == null ? (int?) null : DateTime.Today.Year - Birth.Value.Year;
 
 	    public Dictionary<string, TestPerson> ChildrenDct
 	    {
@@ -26,18 +29,24 @@ namespace Zirpl.CalcEngine.Portable.Tests
 			    return Children.ToDictionary(person => person.Name, person => person);
 			}
 	    }
-
-        public Dictionary<string, TestPerson> ChildrenIdDct
+	    
+	    public Dictionary<string, TestPerson> ChildrenIdDct
 		{
 			get
 			{
 				return Children.ToDictionary(person => person.Id.ToString().ToUpperInvariant(), person => person);
 			}
 		}
+	    
+	    public Dictionary<string, object> ChildrenObjectDct
+	    {
+		    get
+		    {
+			    return Children.ToDictionary(person => person.Name, person => person.Age as object);
+		    }
+	    }
 
-		public int Age { get { return DateTime.Today.Year - Birth.Year; } }
-
-        public static TestPerson CreateTestPerson()
+	    public static TestPerson CreateTestPerson()
         {
             var p = new TestPerson();
             p.Name = "Test Person";

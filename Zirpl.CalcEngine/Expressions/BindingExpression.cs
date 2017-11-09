@@ -66,7 +66,7 @@ namespace Zirpl.CalcEngine
                 // get property
                 if (bi.PropertyInfo == null)
                 {
-                    bi.PropertyInfo = type.GetProperty(bi.Name, bf);
+                    bi.PropertyInfo = GetProperty(type, bi.Name, bf);
                 }
 
                 var isGenericList = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
@@ -74,7 +74,7 @@ namespace Zirpl.CalcEngine
                 if (!isGenericList && bi.PropertyInfo == null)
                 {
                     var s = GetBindingPath(_bindingPath, index);
-                    throw new CalcEngineBindingException($"'{bi.Name}' is not valid property of {type.Name} in path '{s}'", prevObj, initialObj, obj, s, type, _bindingPath);
+                    throw new CalcEngineBindingException($"'{bi.Name}' is not valid property of {type.Name} in path '{s}'", obj, prevObj, initialObj, s, type, _bindingPath);
                 }
 
                 prevObj = obj;
@@ -144,6 +144,12 @@ namespace Zirpl.CalcEngine
                             }
                             else
                             {
+                                if (_ce.ThrowOnInvalidBindingExpression)
+                                {
+                                    var s = GetBindingPath(_bindingPath, index);
+                                    
+                                    throw new CalcEngineBindingException($"'{bi.Name}' of {type.Name} don't have key(s) '{string.Join("; ", list.Select(o1 => o1.ToString()))}'", obj, prevObj, initialObj, s, type, _bindingPath);
+                                }
                                 obj = CreateInstance(bi.PropertyInfoItem.PropertyType);
                             }
                         }
@@ -155,6 +161,12 @@ namespace Zirpl.CalcEngine
 
             // all done
             return obj;
+        }
+
+        private PropertyInfo GetProperty(Type type, string biName, BindingFlags bf)
+        {
+            var all = type.GetProperties(bf).Where(x => x.Name == biName).ToList();
+            return all.FirstOrDefault(x => x.DeclaringType == type) ?? all.First();
         }
 
         private string GetBindingPath(List<BindingInfo> bindingPath, int index)

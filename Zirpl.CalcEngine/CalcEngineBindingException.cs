@@ -28,10 +28,10 @@ namespace Zirpl.CalcEngine
             Initial = initialObj;
         }
 
-        internal CalcEngineBindingException(string message, object previousObj, object initialObj, object current, string fullPath, Type type, List<BindingInfo> bindingPath) : this(message, previousObj, initialObj)
+        internal CalcEngineBindingException(string message, object currentObj, object previousObj, object initialObj, string fullPath, Type type, List<BindingInfo> bindingPath) : this(message, previousObj, initialObj)
         {
             _bindingPath = bindingPath;
-            Current = current;
+            Current = currentObj;
             FullPath = fullPath;
             Type = type;
         }
