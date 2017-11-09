@@ -784,6 +784,10 @@ namespace Zirpl.CalcEngine
 
 		private string GetCurrentTokenError()
 		{
+			if (_ptr == 0)
+			{
+				return "[" + _token.Value + "]";
+			}
 			return _expr.Substring(0, _ptr - 1) + "[" + _token.Value + "]" + _expr.Substring(_ptr);
 		}
 

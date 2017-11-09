@@ -73,7 +73,7 @@ namespace Zirpl.CalcEngine.Portable.Tests
 
 
             // COMPARE TESTS
-            engine.Test("5=5"   , true);
+	        engine.Test("5=5"   , true);
 			engine.Test("'2'='2'", true);
 			engine.Test("5==5"  , true);
             engine.Test("6==5"  , false);
@@ -86,6 +86,7 @@ namespace Zirpl.CalcEngine.Portable.Tests
             // LOGICAL FUNCTION TESTS
 
             engine.Test("5<=6.0 && 6>=3"  , true);
+	        engine.Test("true"   , true);
             engine.Test("true  && true"   , true);
             engine.Test("true  && false"  , false);
             engine.Test("false && true"   , false);

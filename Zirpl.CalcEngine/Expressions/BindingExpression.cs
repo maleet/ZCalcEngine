@@ -66,7 +66,7 @@ namespace Zirpl.CalcEngine
                 // get property
                 if (bi.PropertyInfo == null)
                 {
-                    bi.PropertyInfo = type.GetProperty(bi.Name, bf);
+                    bi.PropertyInfo = GetProperty(type, bi.Name, bf);
                 }
 
                 var isGenericList = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
@@ -161,6 +161,12 @@ namespace Zirpl.CalcEngine
 
             // all done
             return obj;
+        }
+
+        private PropertyInfo GetProperty(Type type, string biName, BindingFlags bf)
+        {
+            var all = type.GetProperties(bf).Where(x => x.Name == biName).ToList();
+            return all.FirstOrDefault(x => x.DeclaringType == type) ?? all.First();
         }
 
         private string GetBindingPath(List<BindingInfo> bindingPath, int index)
