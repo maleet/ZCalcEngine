@@ -55,8 +55,9 @@ namespace Zirpl.CalcEngine.Portable.Tests
 			engine.Test("Name.Length * 2", p.Name.Length * 2);
             engine.Test("Children.Count", p.Children.Count);
             engine.Test("Children(2).Name", p.Children[2].Name);
-            engine.Test("ChildrenDct(\"Test Child 2\").Name", p.ChildrenDct["Test Child 2"].Name);
+            engine.Test("Parent.ChildrenDct(\"Test Child 2\").Name", p.ChildrenDct["Test Child 2"].Name);
 			engine.Test("ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
+	        engine.Test("Parent.ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
 			engine.Test("ChildrenIdDct('16C5888C-6C75-43DD-A372-2A3398DAE038').Name", p.ChildrenDct["Test Child 1"].Name);
 			engine.Test("ChildrenDct.Count", p.ChildrenDct.Count);
             engine.DataContext = dc;
