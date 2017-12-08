@@ -18492,7 +18492,11 @@
       "Microsoft.NETCore.Portable.Compatibility": "1.0.0"
     },
     "frameworks": {
-      "dotnet": {}
+      "dotnet5.0": {
+        "imports": [
+          "portable-net452+win81"
+        ]
+      }
     },
     "supports": {
       "dnxcore50.app": {},

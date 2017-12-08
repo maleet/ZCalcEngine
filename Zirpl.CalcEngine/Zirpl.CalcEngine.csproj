@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CalcEngineBindingException.cs" />
+    <Compile Include="CalcEngineException.cs" />
     <Compile Include="CalculationEngine.cs" />
     <Compile Include="Expressions\BinaryExpression.cs" />
     <Compile Include="Expressions\BindingExpression.cs" />
@@ -55,6 +56,7 @@
     <Compile Include="Expressions\UnaryExpression.cs" />
     <Compile Include="Expressions\VariableExpression.cs" />
     <Compile Include="Expressions\XObjectExpression.cs" />
+    <Compile Include="Functions\Array.cs" />
     <Compile Include="Functions\CalcEngineFunction.cs" />
     <Compile Include="Functions\FunctionDefinition.cs" />
     <Compile Include="Functions\Logical.cs" />

@@ -48,7 +48,7 @@ namespace Zirpl.CalcEngine
 
                 if (obj == null && _ce.InValidation)
                 {
-                    var propertyInfo = prevObj.GetType().GetProperty(bi.Name, bf);
+                    var propertyInfo = GetProperty(prevObj.GetType(), bi.Name, bf);
                     if (propertyInfo != null)
                     {
                         obj = CreateInstance(propertyInfo.PropertyType);
@@ -82,7 +82,7 @@ namespace Zirpl.CalcEngine
                 obj = bi.PropertyInfo.GetValue(obj, null);
                 if (obj == null && _ce.InValidation)
                 {
-                    var propertyInfo = prevObj.GetType().GetProperty(bi.Name, bf);
+                    var propertyInfo = GetProperty(prevObj.GetType(), bi.Name, bf);
                     obj = CreateInstance(propertyInfo.PropertyType);
                 }
                 // handle indexers (lists and dictionaries)
@@ -91,7 +91,7 @@ namespace Zirpl.CalcEngine
                     // get indexer property (always called "Item")
                     if (bi.PropertyInfoItem == null)
                     {
-                        bi.PropertyInfoItem = obj.GetType().GetProperty("Item", bf);
+                        bi.PropertyInfoItem = GetProperty(obj.GetType(), "Item", bf);
                     }
 
                     // get indexer parameters
@@ -113,7 +113,6 @@ namespace Zirpl.CalcEngine
                     else
                     {
                         var o = obj;
-//
 
                         var isGenericType = o.GetType().IsGenericType;
                         var genericTypeDefinition = o.GetType().GetGenericTypeDefinition();
@@ -148,7 +147,7 @@ namespace Zirpl.CalcEngine
                                 {
                                     var s = GetBindingPath(_bindingPath, index);
                                     
-                                    throw new CalcEngineBindingException($"'{bi.Name}' of {type.Name} don't have key(s) '{string.Join("; ", list.Select(o1 => o1.ToString()))}'", obj, prevObj, initialObj, s, type, _bindingPath);
+                                    throw new CalcEngineBindingException($"'{bi.Name}' of '{prevObj.ToString()}' ({type.Name}) don't have key(s) '{string.Join("; ", list.Select(o1 => o1.ToString()))}'", obj, prevObj, initialObj, s, type, _bindingPath);
                                 }
                                 obj = CreateInstance(bi.PropertyInfoItem.PropertyType);
                             }
@@ -166,7 +165,7 @@ namespace Zirpl.CalcEngine
         private PropertyInfo GetProperty(Type type, string biName, BindingFlags bf)
         {
             var all = type.GetProperties(bf).Where(x => x.Name == biName).ToList();
-            return all.FirstOrDefault(x => x.DeclaringType == type) ?? all.First();
+            return all.FirstOrDefault(x => x.DeclaringType == type) ?? all.FirstOrDefault();
         }
 
         private string GetBindingPath(List<BindingInfo> bindingPath, int index)

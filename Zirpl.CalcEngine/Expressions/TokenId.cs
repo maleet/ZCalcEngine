@@ -17,5 +17,7 @@ namespace Zirpl.CalcEngine
         POWER, // POWER
         OPEN, CLOSE, END, COMMA, PERIOD, // GROUP
         ATOM, // LITERAL, IDENTIFIER
+        COPEN, CCLOSE, // Object,
+        SOPEN, SCLOSE // Array
     }
 }

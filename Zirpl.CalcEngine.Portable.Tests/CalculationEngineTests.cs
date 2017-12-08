@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace Zirpl.CalcEngine.Portable.Tests
@@ -18,7 +19,7 @@ namespace Zirpl.CalcEngine.Portable.Tests
 
             // adjust culture
             var cultureInfo = engine.CultureInfo;
-            engine.CultureInfo = System.Globalization.CultureInfo.InvariantCulture;
+            engine.CultureInfo = CultureInfo.InvariantCulture;
 
 	        // test internal operators
             engine.Test("0", 0.0);
@@ -43,12 +44,24 @@ namespace Zirpl.CalcEngine.Portable.Tests
 			engine.Test("(two + two)^2", 16);
             engine.Variables.Clear();
 
+	        // test Array variables
+	        var array = new List<double> {0, 1, 2, 3}.ToArray();
+	        var strings = new List<string> {"K", "E", "S", "A"}.ToArray();
+	        engine.Variables.Add("A", array);
+	        engine.Variables.Add("B", strings);
+	        
+	        engine.Test("A", array);
+	        engine.Test("B", strings);
+	        
             // test DataContext
             var dc = engine.DataContext;
             var p = TestPerson.CreateTestPerson();
 			p.Parent = TestPerson.CreateTestPerson();
 			engine.DataContext = p;
+	        
 			engine.Test("Name", "Test Person");
+	        engine.Test("HASH(Name)", "53A4E9EC08910DE9BB6EDAA99F8C867C");
+	        engine.Test("HASH('Name')", "49EE3087348E8D44E1FEDA1917443987");
 	        engine.Functions.Remove("CODE");
 			Assert.IsTrue(engine.Validate<bool>("Code='Code'"));
 			engine.Test("Parent.Name", "Test Person");
@@ -70,8 +83,15 @@ namespace Zirpl.CalcEngine.Portable.Tests
             engine.DataContext = dc;
 
             // test functions
-
-
+	        
+	        Assert.That(new double[]{0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("Range(0, 3)") as IEnumerable));
+	        Assert.That(new double[]{0, 100, 200}, Is.EquivalentTo(engine.Evaluate("Range(0, 200, 100)") as IEnumerable));
+	        Assert.That(new[]{"K", "E", "S"}, Is.EquivalentTo(engine.Evaluate("Array('K', 'E', 'S')") as IEnumerable));
+	        Assert.That(new double[]{1, 3}, Is.EquivalentTo(engine.Evaluate("Array(1, 3)") as IEnumerable));
+	        Assert.That(new dynamic[]{1, "3"}, Is.EquivalentTo(engine.Evaluate("Array(1, '3')") as IEnumerable));
+	        
+	        Assert.That(new double[]{0, 100, 200, 300, 400}, Is.EquivalentTo(engine.Evaluate("Map(Range(0, 200, 100),Range(100, 400, 100))") as IEnumerable));
+	        
             // COMPARE TESTS
 	        engine.Test("5=5"   , true);
 			engine.Test("'2'='2'", true);
@@ -223,8 +243,11 @@ namespace Zirpl.CalcEngine.Portable.Tests
 			//expression1.Validate();
 
 			p.Parent = TestPerson.CreateTestPerson();
-			p.Parent.Address = new Address() { Street = "sdf" };
-			expression1.Evaluate();
+			p.Parent.Address = new Address { Street = "sdf" };
+		    Assert.Throws<CalcEngineBindingException>(() =>
+		    {
+			    expression1.Evaluate();
+		    });	
 	    }
 
 		[Test]

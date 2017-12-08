@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{32D323
 		.nuget\NuGet.exe = .nuget\NuGet.exe
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 		.nuget\Zirpl.CalcEngine.nuspec = .nuget\Zirpl.CalcEngine.nuspec
+		.nuget\build.ps1 = .nuget\build.ps1
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zirpl.CalcEngine.Portable", "Zirpl.CalcEngine.Portable\Zirpl.CalcEngine.Portable.csproj", "{96F8314F-4599-490D-B18E-D05D32B13842}"
