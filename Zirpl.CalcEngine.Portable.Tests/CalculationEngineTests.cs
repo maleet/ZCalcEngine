@@ -49,6 +49,13 @@ namespace Zirpl.CalcEngine.Portable.Tests
 	        var strings = new List<string> {"K", "E", "S", "A"}.ToArray();
 	        engine.Variables.Add("A", array);
 	        engine.Variables.Add("B", strings);
+	        engine.Variables.Add("Decimal", 4.5M);
+	        engine.Variables.Add("Double", 5.5);
+	        
+	        engine.Variables.Add("D310", 310M);
+	        engine.Variables.Add("D32", 32M);
+	        
+	        engine.Test("D310>=250 && D32<=315", true);
 	        
 	        engine.Test("A", array);
 	        engine.Test("B", strings);
@@ -60,6 +67,10 @@ namespace Zirpl.CalcEngine.Portable.Tests
 			engine.DataContext = p;
 	        
 			engine.Test("Name", "Test Person");
+	        engine.Test("Number", 55);
+	        engine.Test("Max(Number, 5,33)", 55);
+	        engine.Test("Min(Number, 5,88, Decimal)", 4.5M);
+	        
 	        engine.Test("HASH(Name)", "53A4E9EC08910DE9BB6EDAA99F8C867C");
 	        engine.Test("HASH('Name')", "49EE3087348E8D44E1FEDA1917443987");
 	        engine.Functions.Remove("CODE");
@@ -88,9 +99,25 @@ namespace Zirpl.CalcEngine.Portable.Tests
 	        Assert.That(new double[]{0, 100, 200}, Is.EquivalentTo(engine.Evaluate("Range(0, 200, 100)") as IEnumerable));
 	        Assert.That(new[]{"K", "E", "S"}, Is.EquivalentTo(engine.Evaluate("Array('K', 'E', 'S')") as IEnumerable));
 	        Assert.That(new double[]{1, 3}, Is.EquivalentTo(engine.Evaluate("Array(1, 3)") as IEnumerable));
-	        Assert.That(new dynamic[]{1, "3"}, Is.EquivalentTo(engine.Evaluate("Array(1, '3')") as IEnumerable));
+
+	        IList<dynamic> enumerable = engine.Evaluate("Array(1, '3')") as object[];
+
+	        Assert.That(new dynamic[]{1, "3"}, Is.EquivalentTo(enumerable));
 	        
 	        Assert.That(new double[]{0, 100, 200, 300, 400}, Is.EquivalentTo(engine.Evaluate("Map(Range(0, 200, 100),Range(100, 400, 100))") as IEnumerable));
+	        
+	       
+	        Assert.That(new double[]{0, 1, 2}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), 3)") as IEnumerable));
+	        Assert.That(new double[]{0, 1, 2}, Is.EquivalentTo(engine.Evaluate("lt(Range(0, 3), 3)") as IEnumerable));
+	        Assert.That(new double[]{1}, Is.EquivalentTo(engine.Evaluate("LessThan(Array('1', '4'), 3)") as IEnumerable));
+	        Assert.That(new double[]{0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("LessOrEqual(Range(0, 3), 3)") as IEnumerable));
+	        Assert.That(new double[]{0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("le(Range(0, 3), 3)") as IEnumerable));
+	        
+	        Assert.That(new double[]{2, 3}, Is.EquivalentTo(engine.Evaluate("GreaterThan(Range(0, 3), 1)") as IEnumerable));
+	        Assert.That(new double[]{2, 3}, Is.EquivalentTo(engine.Evaluate("gt(Range(0, 3), 1)") as IEnumerable));
+	        Assert.That(new double[]{1, 2, 3}, Is.EquivalentTo(engine.Evaluate("GreaterOrEqual(Range(0, 3), 1)") as IEnumerable));
+	        Assert.That(new double[]{1, 2, 3}, Is.EquivalentTo(engine.Evaluate("ge(Range(0, 3), 1)") as IEnumerable));
+	        Assert.That(new double[]{4.5, 5.5}, Is.EquivalentTo(engine.Evaluate("ge(Array(Decimal, Double), 1)") as IEnumerable));
 	        
             // COMPARE TESTS
 	        engine.Test("5=5"   , true);
@@ -102,6 +129,7 @@ namespace Zirpl.CalcEngine.Portable.Tests
             engine.Test("6>5"   , true);
             engine.Test("5<=10" , true);
             engine.Test("5>=3"  , true);
+	        engine.Test("'Viis'>='Üks'"  , false);
 
             // LOGICAL FUNCTION TESTS
 
@@ -159,6 +187,8 @@ namespace Zirpl.CalcEngine.Portable.Tests
             engine.Test("SINH(1.23)", Math.Sinh(1.23));
             engine.Test("SQRT(144)", Math.Sqrt(144));
             engine.Test("SUM(1, 2, 3, 4)", 1 + 2 + 3 + 4.0);
+	        engine.Test("MAX(1.4, 2, 3, 4.5)", 4.5);
+	        engine.Test("MIN(1.4, 2, 3, 4.5)", 1.4);
             engine.Test("TAN(1.23)", Math.Tan(1.23));
             engine.Test("TANH(1.23)", Math.Tanh(1.23));
             engine.Test("TRUNC(1.23)", 1.0);
@@ -203,6 +233,9 @@ namespace Zirpl.CalcEngine.Portable.Tests
             engine.Test("TRIM(\"   hello   \")", "hello");
             engine.Test("UPPER(\"abracadabra\")", "ABRACADABRA");
             engine.Test("VALUE(\"1234\")", 1234.0);
+	        engine.Test("PadLeft(1254, 6, \"0\")", "001254");
+	        engine.Test("PadRight(1254, 6, \"0\")", "125400");
+	        engine.Test("AffixIF(1254, \"p\", \"s\")", "p1254s");
 
             engine.Test("SUBSTITUTE(\"abcabcabc\", \"a\", \"b\")", "bbcbbcbbc");
             engine.Test("SUBSTITUTE(\"abcabcabc\", \"a\", \"b\", 1)", "bbcabcabc");

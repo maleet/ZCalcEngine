@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Zirpl.CalcEngine
@@ -69,7 +70,18 @@ namespace Zirpl.CalcEngine
             ce.RegisterFunction("TAN", 1, Tan);
             ce.RegisterFunction("TANH", 1, Tanh);
             ce.RegisterFunction("TRUNC", 1, Trunc);
+            
+            ce.RegisterFunction("LESSTHAN", 2, LessThan);
+            ce.RegisterFunction("LT", 2, LessThan);
+            ce.RegisterFunction("LESSOREQUAL", 2, LessOrEqual);
+            ce.RegisterFunction("LE", 2, LessOrEqual);
+            
+            ce.RegisterFunction("GREATERTHAN", 2, GreaterThan);
+            ce.RegisterFunction("GT", 2, GreaterThan);
+            ce.RegisterFunction("GREATEROREQUAL", 2, GreaterOrEqual);
+            ce.RegisterFunction("GE", 2, GreaterOrEqual);
         }
+
         static object Abs(List<Expression> p)
         {
             return Math.Abs((double)p[0]);
@@ -180,6 +192,49 @@ namespace Zirpl.CalcEngine
         static object Trunc(List<Expression> p)
         {
             return (double)(int)((double)p[0]);
+        }
+        
+        static object LessThan(List<Expression> parms)
+        {
+            var numbers = GetNumbersAndThan(parms, out var max);
+            return numbers.Where(arg => arg < max).ToList();
+        }
+
+        static object LessOrEqual(List<Expression> parms)
+        {
+            var numbers = GetNumbersAndThan(parms, out var max);
+            return numbers.Where(arg => arg <= max).ToList();
+        }
+
+        static object GreaterThan(List<Expression> parms)
+        {
+            var numbers = GetNumbersAndThan(parms, out var max);
+            return numbers.Where(arg => arg > max).ToList();
+        }
+
+        static object GreaterOrEqual(List<Expression> parms)
+        {
+            var numbers = GetNumbersAndThan(parms, out var max);
+            return numbers.Where(arg => arg >= max).ToList();
+        }
+
+        private static List<double> GetNumbersAndThan(List<Expression> parms, out double max)
+        {
+            var enumerable = parms[0].Evaluate() as IEnumerable;
+            var numbers = new List<double>();
+            foreach (var v in enumerable)
+            {
+                try
+                {
+                    numbers.Add(Convert.ToDouble(v));
+                }
+                catch (InvalidCastException e)
+                {
+                }
+            }
+
+            max = Convert.ToDouble(parms[1].Evaluate());
+            return numbers;
         }
     }
 }

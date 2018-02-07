@@ -19,6 +19,7 @@ namespace Zirpl.CalcEngine
     public class Expression : IComparable<Expression>
     {
         //---------------------------------------------------------------------------
+
         #region ** fields
 
         internal Token _token;
@@ -27,16 +28,19 @@ namespace Zirpl.CalcEngine
         #endregion
 
         //---------------------------------------------------------------------------
+
         #region ** ctors
 
         internal Expression()
         {
             _token = new Token(null, TokenId.ATOM, TokenType.IDENTIFIER);
         }
+
         internal Expression(object value)
         {
             _token = new Token(value, TokenId.ATOM, TokenType.LITERAL);
         }
+
         internal Expression(Token tk)
         {
             _token = tk;
@@ -45,6 +49,7 @@ namespace Zirpl.CalcEngine
         #endregion
 
         //---------------------------------------------------------------------------
+
         #region ** object model
 
         public virtual object Evaluate()
@@ -53,8 +58,10 @@ namespace Zirpl.CalcEngine
             {
                 throw new ArgumentException("Bad expression.");
             }
+
             return _token.Value;
         }
+
         public virtual Expression Optimize()
         {
             return this;
@@ -63,6 +70,7 @@ namespace Zirpl.CalcEngine
         #endregion
 
         //---------------------------------------------------------------------------
+
         #region ** implicit converters
 
         public static implicit operator string(Expression x)
@@ -70,6 +78,7 @@ namespace Zirpl.CalcEngine
             var v = x.Evaluate();
             return v == null ? string.Empty : v.ToString();
         }
+
         public static implicit operator double(Expression x)
         {
             // evaluate
@@ -78,13 +87,13 @@ namespace Zirpl.CalcEngine
             // handle doubles
             if (v is double)
             {
-                return (double)v;
+                return (double) v;
             }
 
             // handle booleans
             if (v is bool)
             {
-                return (bool)v ? 1 : 0;
+                return (bool) v ? 1 : 0;
             }
 
             //// handle dates
@@ -105,9 +114,9 @@ namespace Zirpl.CalcEngine
             }
 
             // handle everything else
-            return (double)Convert.ChangeType(v, typeof(double), _ci);
+            return (double) Convert.ChangeType(v, typeof(double), _ci);
         }
-        
+
         public static implicit operator bool(Expression x)
         {
             // evaluate
@@ -116,7 +125,7 @@ namespace Zirpl.CalcEngine
             // handle booleans
             if (v is bool)
             {
-                return (bool)v;
+                return (bool) v;
             }
 
             // handle nulls
@@ -128,12 +137,13 @@ namespace Zirpl.CalcEngine
             // handle doubles
             if (v is double)
             {
-                return (double)v == 0 ? false : true;
+                return (double) v == 0 ? false : true;
             }
 
             // handle everything else
-            return (double)x == 0 ? false : true;
+            return (double) x == 0 ? false : true;
         }
+
         public static implicit operator DateTime(Expression x)
         {
             // evaluate
@@ -142,7 +152,7 @@ namespace Zirpl.CalcEngine
             // handle dates
             if (v is DateTime)
             {
-                return (DateTime)v;
+                return (DateTime) v;
             }
 
             //// handle doubles
@@ -152,12 +162,13 @@ namespace Zirpl.CalcEngine
             //}
 
             // handle everything else
-            return (DateTime)Convert.ChangeType(v, typeof(DateTime), _ci);
+            return (DateTime) Convert.ChangeType(v, typeof(DateTime), _ci);
         }
 
         #endregion
 
         //---------------------------------------------------------------------------
+
         #region ** IComparable<Expression>
 
         public int CompareTo(Expression other)
@@ -171,10 +182,12 @@ namespace Zirpl.CalcEngine
             {
                 return 0;
             }
+
             if (c2 == null)
             {
                 return -1;
             }
+
             if (c1 == null)
             {
                 return +1;
@@ -183,19 +196,44 @@ namespace Zirpl.CalcEngine
             // make sure types are the same
             if (c1.GetType() != c2.GetType())
             {
-                c1 = Convert.ChangeType(c1, typeof(string),null) as IComparable;
-                c2 = Convert.ChangeType(c2, typeof(string),null) as IComparable;
+                if (TryConvert(c1, c2, out IComparable c3))
+                {
+                    c1 = c3;
+                }
+                else if(TryConvert(c2, c1, out IComparable c4))
+                {
+                    c2 = c4;                    
+                }
+                else
+                {
+                    c1 = Convert.ChangeType(c1, typeof(string), null) as IComparable;
+                    c2 = Convert.ChangeType(c2, typeof(string), null) as IComparable;    
+                }
             }
 
             // compare
             return c1.CompareTo(c2);
         }
 
+        private bool TryConvert(IComparable c1, IComparable c2, out IComparable result)
+        {
+            try
+            {
+                result = Convert.ChangeType(c1, c2.GetType(), null) as IComparable;
+                return true;
+            }
+            catch (InvalidCastException e)
+            {
+                result = c1;
+                return false;
+            }
+        }
+
         #endregion
 
-	    public void Validate()
-	    {   
-			Evaluate();
-		}
-	}
+        public void Validate()
+        {
+            Evaluate();
+        }
+    }
 }

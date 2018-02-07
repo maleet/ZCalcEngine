@@ -27,9 +27,12 @@ namespace Zirpl.CalcEngine
             ce.RegisterFunction("Array", 0, int.MaxValue, parms =>
             {
                 var objects = new List<object>();
-                foreach (var v in parms)
+                if (parms != null)
                 {
-                    objects.Add(v.Evaluate());
+                    foreach (var v in parms)
+                    {
+                        objects.Add(v.Evaluate());
+                    }
                 }
 
                 return objects.ToArray();
@@ -38,13 +41,16 @@ namespace Zirpl.CalcEngine
             ce.RegisterFunction("Map", 0, int.MaxValue, parms =>
             {
                 var objects = new List<object>();
-                foreach (var v in parms)
+                if (parms != null)
                 {
-                    IEnumerable o = (IEnumerable) v.Evaluate();
+                    foreach (var v in parms)
+                    {
+                        IEnumerable o = (IEnumerable) v.Evaluate();
 
-                    var enumerable = o.Cast<object>();
+                        var enumerable = o.Cast<object>();
 
-                    objects.AddRange(enumerable.Where(o1 => !objects.Contains(o1)));
+                        objects.AddRange(enumerable.Where(o1 => !objects.Contains(o1)));
+                    }
                 }
 
                 return objects.ToArray();

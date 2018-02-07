@@ -58,6 +58,11 @@ namespace Zirpl.CalcEngine
                 value = (double)(int)value;
             }
 
+            if (value is decimal)
+            {
+                value = decimal.ToDouble((decimal)value);
+            }
+            
             // tally
             if (value is double)
             {

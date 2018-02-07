@@ -11,16 +11,16 @@ namespace Zirpl.CalcEngine
     /// <summary>
     /// Expression based on an object's properties.
     /// </summary>
-    class BindingExpression : Expression
+    public class BindingExpression : Expression
     {
-        CalculationEngine _ce;
+        public CalculationEngine CalculationEngine { get; }
         List<BindingInfo> _bindingPath;
         CultureInfo _ci;
 
         // ** ctor
         internal BindingExpression(CalculationEngine engine, List<BindingInfo> bindingPath, CultureInfo ci)
         {
-            _ce = engine;
+            CalculationEngine = engine;
             _bindingPath = bindingPath;
             _ci = ci;
         }
@@ -28,7 +28,7 @@ namespace Zirpl.CalcEngine
         // ** object model
         public override object Evaluate()
         {
-            return GetValue(_ce.DataContext);
+            return GetValue(CalculationEngine.DataContext);
         }
 
         // ** implementation
@@ -46,7 +46,7 @@ namespace Zirpl.CalcEngine
             {
                 var bi = _bindingPath[index];
 
-                if (obj == null && _ce.InValidation)
+                if (obj == null && CalculationEngine.InValidation)
                 {
                     var propertyInfo = GetProperty(prevObj.GetType(), bi.Name, bf);
                     if (propertyInfo != null)
@@ -80,7 +80,7 @@ namespace Zirpl.CalcEngine
                 prevObj = obj;
                 // get object
                 obj = bi.PropertyInfo.GetValue(obj, null);
-                if (obj == null && _ce.InValidation)
+                if (obj == null && CalculationEngine.InValidation)
                 {
                     var propertyInfo = GetProperty(prevObj.GetType(), bi.Name, bf);
                     obj = CreateInstance(propertyInfo.PropertyType);
@@ -104,7 +104,7 @@ namespace Zirpl.CalcEngine
                         list.Add(pv);
                     }
 
-                    if (_ce.InValidation)
+                    if (CalculationEngine.InValidation)
                     {
                         //(bi.PropertyInfoItem as RuntimePropertyInfo);
 
@@ -143,7 +143,7 @@ namespace Zirpl.CalcEngine
                             }
                             else
                             {
-                                if (_ce.ThrowOnInvalidBindingExpression)
+                                if (CalculationEngine.ThrowOnInvalidBindingExpression)
                                 {
                                     var s = GetBindingPath(_bindingPath, index);
                                     

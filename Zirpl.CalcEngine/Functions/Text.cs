@@ -39,6 +39,9 @@ namespace Zirpl.CalcEngine
             ce.RegisterFunction("UPPER", 1, Upper); // Converts text to uppercase
             ce.RegisterFunction("VALUE", 1, Value); // Converts a text argument to a number
             ce.RegisterFunction("HASH", 1, 1, Hash);
+            ce.RegisterFunction("PADLEFT", 2, 3, PadLeft);
+            ce.RegisterFunction("PADRIGHT", 2, 3, PadRight);
+            ce.RegisterFunction("AFFIXIF", 1, 3, AffixIf);
         }
 
         static object _Char(List<Expression> p)
@@ -228,6 +231,58 @@ namespace Zirpl.CalcEngine
 
                 return sb.ToString();
             }
+        }
+
+        private static object PadRight(List<Expression> parms)
+        {
+            return PadString(parms, false);            
+        }
+
+        private static object PadLeft(List<Expression> parms)
+        {
+            return PadString(parms, true);
+        }
+        
+
+        private static object PadString(List<Expression> parms, bool isLeft)
+        {
+            var s = parms[0].Evaluate().ToString();
+            int length = (int) parms[1];
+            var leadingChar = " ";
+
+            if (parms.Count > 2)
+            {
+                leadingChar = parms[2].Evaluate().ToString();
+            }
+
+            if(isLeft)
+                return s.PadLeft(length, Convert.ToChar(leadingChar));
+            return s.PadRight(length, Convert.ToChar(leadingChar));
+        }
+
+        private static string AffixIf(List<Expression> parms)
+        {
+            var expression = parms[0].Evaluate();
+            if (expression == null)
+            {
+                return null;
+            }
+
+            var s = expression.ToString();
+
+            if (parms.Count > 1)
+            {
+                var prefix = parms[1].Evaluate().ToString();
+                s = prefix + s;
+            }
+
+            if (parms.Count > 2)
+            {
+                var sufix = parms[2].Evaluate().ToString();
+                s = s + sufix;
+            }
+
+            return s;
         }
     }
 }

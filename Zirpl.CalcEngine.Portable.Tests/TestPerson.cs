@@ -53,6 +53,7 @@ namespace Zirpl.CalcEngine.Portable.Tests
 			p.Code = "Code";
 			p.Id = Guid.Parse("96C5888C-6C75-43DD-A372-2A3398DAE038");
 			p.Birth = DateTime.Today.AddYears(-30);
+	        p.Number = 55;
             p.Male = true;
 			for (int i = 0; i < 5; i++)
 			{
@@ -61,10 +62,13 @@ namespace Zirpl.CalcEngine.Portable.Tests
 				c.Id = Guid.Parse(i + "6C5888C-6C75-43DD-A372-2A3398DAE038");
 				c.Birth = DateTime.Today.AddYears(-i);
 				c.Male = i % 2 == 0;
+				c.Number = i;
 				p.Children.Add(c);
 			}
 			return p;
         }
+
+	    public int Number { get; set; }
 
 	    public string Code { get; set; }
 
