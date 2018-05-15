@@ -11,8 +11,8 @@ namespace Zirpl.CalcEngine
     class BinaryExpression : Expression
     {
         // ** fields
-        Expression _lft;
-        Expression _rgt;
+        internal Expression _lft;
+        internal Expression _rgt;
 
         // ** ctor
         public BinaryExpression(Token tk, Expression exprLeft, Expression exprRight)

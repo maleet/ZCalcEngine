@@ -12,32 +12,34 @@ namespace Zirpl.CalcEngine
     {
         // ** fields
         FunctionDefinition _fn;
-        List<Expression> _parms;
+        public List<Expression> Parms { get; }
+        private readonly CalculationEngine _engine;
 
         // ** ctor
         internal FunctionExpression()
         {
         }
-        public FunctionExpression(FunctionDefinition function, List<Expression> parms)
+        public FunctionExpression(FunctionDefinition function, List<Expression> parms, CalculationEngine engine)
         {
             _fn = function;
-            _parms = parms;
+            Parms = parms;
+            _engine = engine;
         }
 
         // ** object model
         override public object Evaluate()
         {
-            return _fn.Function(_parms);
+            return _fn.ContextFunction != null ? _fn.ContextFunction(_engine, Parms) : _fn.Function?.Invoke(Parms);
         }
         public override Expression Optimize()
         {
             bool allLits = true;
-            if (_parms != null)
+            if (Parms != null)
             {
-                for (int i = 0; i < _parms.Count; i++)
+                for (int i = 0; i < Parms.Count; i++)
                 {
-                    var p = _parms[i].Optimize();
-                    _parms[i] = p;
+                    var p = Parms[i].Optimize();
+                    Parms[i] = p;
                     if (p._token.Type != TokenType.LITERAL)
                     {
                         allLits = false;

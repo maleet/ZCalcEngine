@@ -2,18 +2,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using NUnit.Framework;
 
-namespace Zirpl.CalcEngine.Portable.Tests
+namespace Zirpl.CalcEngine.Tests
 {
     [TestFixture]
     public class CalculationEngineTests
     {
         [Test]
-        public void Test()
+        public void Array_Test()
         {
             CalculationEngine engine = new CalculationEngine();
 
@@ -21,7 +18,123 @@ namespace Zirpl.CalcEngine.Portable.Tests
             var cultureInfo = engine.CultureInfo;
             engine.CultureInfo = CultureInfo.InvariantCulture;
 
-	        // test internal operators
+            // test Array variables
+            var array = new List<double> {0, 1, 2, 3}.ToArray();
+            var strings = new List<string> {"K", "E", "S", "A"}.ToArray();
+            engine.Variables.Add("A", array);
+            engine.Variables.Add("B", strings);
+            engine.Variables.Add("Decimal", 4.5M);
+            engine.Variables.Add("Number", 55);
+            engine.Variables.Add("Double", 5.5);
+            engine.Variables.Add("D310", 310M);
+            engine.Variables.Add("D32", 32M);
+
+            engine.Test("D310>=250 && D32<=315", true);
+
+            engine.Test("A", array);
+            engine.Test("B", strings);
+            engine.Test("Max(Array(5,6,7))", 7);
+            engine.Test("Number", 55);
+            engine.Test("Max(Number, 5,33)", 55);
+            engine.Test("Min(Number, 5,88, Decimal)", 4.5M, "Min(55, 5,88, 4,5)");
+
+            Assert.That(new double[] {0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("Range(0, 3)") as IEnumerable));
+            Assert.That(new double[] {0, 100, 200}, Is.EquivalentTo(engine.Evaluate("Range(0, 200, 100)") as IEnumerable));
+            Assert.That(new[] {"K", "E", "S"}, Is.EquivalentTo(engine.Evaluate("Array('K', 'E', 'S')") as IEnumerable));
+            Assert.That(new double[] {1, 3}, Is.EquivalentTo(engine.Evaluate("Array(1, 3)") as IEnumerable));
+
+            IList<dynamic> enumerable = engine.Evaluate("Array(1, '3')") as object[];
+
+            Assert.That(new dynamic[] {1, "3"}, Is.EquivalentTo(enumerable));
+
+            Assert.That(new double[] {0, 100, 200, 300, 400}, Is.EquivalentTo(engine.Evaluate("Map(Range(0, 200, 100),Range(100, 400, 100))") as IEnumerable));
+
+
+            Assert.That(new double[] {0, 1, 2}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), 3)") as IEnumerable));
+            Assert.That(new double[] {0, 1, 2}, Is.EquivalentTo(engine.Evaluate("lt(Range(0, 3), 3)") as IEnumerable));
+            Assert.That(new double[] {1}, Is.EquivalentTo(engine.Evaluate("LessThan(Array('1', '4'), 3)") as IEnumerable));
+            Assert.That(new double[] {0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("LessOrEqual(Range(0, 3), 3)") as IEnumerable));
+            Assert.That(new double[] {0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("le(Range(0, 3), 3)") as IEnumerable));
+
+            Assert.That(new double[] {2, 3}, Is.EquivalentTo(engine.Evaluate("GreaterThan(Range(0, 3), 1)") as IEnumerable));
+            Assert.That(new double[] {2, 3}, Is.EquivalentTo(engine.Evaluate("gt(Range(0, 3), 1)") as IEnumerable));
+            Assert.That(new double[] {1, 2, 3}, Is.EquivalentTo(engine.Evaluate("GreaterOrEqual(Range(0, 3), 1)") as IEnumerable));
+            Assert.That(new double[] {1, 2, 3}, Is.EquivalentTo(engine.Evaluate("ge(Range(0, 3), 1)") as IEnumerable));
+            Assert.That(new double[] {4.5, 5.5}, Is.EquivalentTo(engine.Evaluate("ge(Array(Decimal, Double), 1)") as IEnumerable));
+        }
+
+        [Test]
+        public static void DataContext_Tests()
+        {
+            CalculationEngine engine = new CalculationEngine();
+
+            // adjust culture
+            var cultureInfo = engine.CultureInfo;
+            engine.CultureInfo = CultureInfo.InvariantCulture;
+
+            var p = TestPerson.CreateTestPerson();
+            p.Parent = TestPerson.CreateTestPerson();
+            engine.DataContext = p;
+
+            engine.Test("Name", "Test Person");
+
+            engine.Test("HASH(Name)", "53A4E9EC08910DE9BB6EDAA99F8C867C");
+            engine.Test("HASH('Name')", "49EE3087348E8D44E1FEDA1917443987");
+            engine.Functions.Remove("CODE");
+            Assert.IsTrue(engine.Validate<bool>("Code='Code'"));
+            engine.Test("Parent.Name", "Test Person");
+            engine.Test("Name.Length * 2", p.Name.Length * 2);
+            engine.Test("Children.Count", p.Children.Count);
+            engine.Test("Children(2).Name", p.Children[2].Name);
+
+            engine.Test("15*ChildrenDct(\"Test Child 2\").Age+14", (15 * p.ChildrenDct["Test Child 2"].Age + 14).Value);
+            engine.Test("ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
+            Assert.Throws<CalcEngineBindingException>(() =>
+            {
+                var d = engine.Evaluate<double>("ChildrenAgeDct('Test Child 10') * 2");
+            });
+
+            Assert.AreEqual(0, engine.Evaluate<double>("ChildrenAgeDct('Test Child 10') * 2", false));
+            Assert.AreEqual(2, engine.Evaluate<double>("ChildrenAgeDct('Test Child 10') + 2", false));
+
+            engine.Test("ChildrenIdDct('16C5888C-6C75-43DD-A372-2A3398DAE038').Name", p.ChildrenDct["Test Child 1"].Name);
+            engine.Test("ChildrenDct.Count", p.ChildrenDct.Count);
+
+            // DataContext functions
+            engine.RegisterFunction("GetParent", 0, (calculationEngine, parms) =>
+            {
+                var testPerson = calculationEngine.DataContext as TestPerson;
+                return testPerson.Name;
+            });
+            engine.Test("GetParent()", p.Name);
+
+            engine.InValidation = true;
+            Assert.That(new double[] {}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenAgeDct('Test Child 2'))") as IEnumerable));
+            Assert.That(new double[] {}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenWeightDct('Test Child 2'))") as IEnumerable));
+            Assert.That(new double[] {}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenSalaryDct('Test Child 2'))") as IEnumerable));
+            
+            engine.InValidation = false;
+            Assert.That(new double[] {0, 1}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenAgeDct('Test Child 2'))") as IEnumerable));
+            Assert.That(new double[] {0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenWeightDct('Test Child 2'))") as IEnumerable));
+            Assert.That(new double[] {0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenSalaryDct('Test Child 2'))") as IEnumerable));
+        }
+
+        [Test]
+        public void Functions_Test()
+        {
+            CalculationEngine engine = new CalculationEngine();
+
+            // adjust culture
+            var cultureInfo = engine.CultureInfo;
+            engine.CultureInfo = CultureInfo.InvariantCulture;
+
+            // test invalid parsing
+            Assert.Throws<Exception>(() =>
+            {
+                var d = engine.Evaluate<string>("$ELO: 1 #Amor: ei ole 1");
+            });
+
+            // test internal operators
             engine.Test("0", 0.0);
             engine.Test("+1", 1.0);
             engine.Test("-1", -1.0);
@@ -34,115 +147,40 @@ namespace Zirpl.CalcEngine.Portable.Tests
 
             // test simple variables
             engine.Variables.Add("one", 1);
-			engine.Variables.Add("x", 1);
-			engine.Variables.Add("x2", "1");
-			engine.Variables.Add("two", 2);
+            engine.Variables.Add("x", 1);
+            engine.Variables.Add("x2", "1");
+            engine.Variables.Add("two", 2);
             engine.Test("one + two", 3);
-			engine.Test("x2='1'", true);
+            engine.Test("x2='1'", true);
 
-			engine.Test("2*x+1", 3);
-			engine.Test("(two + two)^2", 16);
+            engine.Test("2*x+1", 3);
+            engine.Test("(two + two)^2", 16);
             engine.Variables.Clear();
 
-	        // test Array variables
-	        var array = new List<double> {0, 1, 2, 3}.ToArray();
-	        var strings = new List<string> {"K", "E", "S", "A"}.ToArray();
-	        engine.Variables.Add("A", array);
-	        engine.Variables.Add("B", strings);
-	        engine.Variables.Add("Decimal", 4.5M);
-	        engine.Variables.Add("Double", 5.5);
-	        
-	        engine.Variables.Add("D310", 310M);
-	        engine.Variables.Add("D32", 32M);
-	        
-	        engine.Test("D310>=250 && D32<=315", true);
-	        
-	        engine.Test("A", array);
-	        engine.Test("B", strings);
-	        
-            // test DataContext
-            var dc = engine.DataContext;
-            var p = TestPerson.CreateTestPerson();
-			p.Parent = TestPerson.CreateTestPerson();
-			engine.DataContext = p;
-	        
-			engine.Test("Name", "Test Person");
-	        engine.Test("Number", 55);
-	        engine.Test("Max(Number, 5,33)", 55);
-	        engine.Test("Min(Number, 5,88, Decimal)", 4.5M);
-	        
-	        engine.Test("HASH(Name)", "53A4E9EC08910DE9BB6EDAA99F8C867C");
-	        engine.Test("HASH('Name')", "49EE3087348E8D44E1FEDA1917443987");
-	        engine.Functions.Remove("CODE");
-			Assert.IsTrue(engine.Validate<bool>("Code='Code'"));
-			engine.Test("Parent.Name", "Test Person");
-			engine.Test("Name.Length * 2", p.Name.Length * 2);
-            engine.Test("Children.Count", p.Children.Count);
-            engine.Test("Children(2).Name", p.Children[2].Name);
-            engine.Test("ChildrenDct(\"Test Child 2\").Name", p.ChildrenDct["Test Child 2"].Name);
-			engine.Test("ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
-	        Assert.Throws<CalcEngineBindingException>(() =>
-	        {
-		        var d = engine.Evaluate<double>("ChildrenObjectDct('Test Child 10') * 2");
-	        });
-	        
-	        Assert.AreEqual(0, engine.Evaluate<double>("ChildrenObjectDct('Test Child 10') * 2", false));
-	        Assert.AreEqual(2, engine.Evaluate<double>("ChildrenObjectDct('Test Child 10') + 2", false));
-
-	        engine.Test("ChildrenIdDct('16C5888C-6C75-43DD-A372-2A3398DAE038').Name", p.ChildrenDct["Test Child 1"].Name);
-			engine.Test("ChildrenDct.Count", p.ChildrenDct.Count);
-            engine.DataContext = dc;
-
-            // test functions
-	        
-	        Assert.That(new double[]{0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("Range(0, 3)") as IEnumerable));
-	        Assert.That(new double[]{0, 100, 200}, Is.EquivalentTo(engine.Evaluate("Range(0, 200, 100)") as IEnumerable));
-	        Assert.That(new[]{"K", "E", "S"}, Is.EquivalentTo(engine.Evaluate("Array('K', 'E', 'S')") as IEnumerable));
-	        Assert.That(new double[]{1, 3}, Is.EquivalentTo(engine.Evaluate("Array(1, 3)") as IEnumerable));
-
-	        IList<dynamic> enumerable = engine.Evaluate("Array(1, '3')") as object[];
-
-	        Assert.That(new dynamic[]{1, "3"}, Is.EquivalentTo(enumerable));
-	        
-	        Assert.That(new double[]{0, 100, 200, 300, 400}, Is.EquivalentTo(engine.Evaluate("Map(Range(0, 200, 100),Range(100, 400, 100))") as IEnumerable));
-	        
-	       
-	        Assert.That(new double[]{0, 1, 2}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), 3)") as IEnumerable));
-	        Assert.That(new double[]{0, 1, 2}, Is.EquivalentTo(engine.Evaluate("lt(Range(0, 3), 3)") as IEnumerable));
-	        Assert.That(new double[]{1}, Is.EquivalentTo(engine.Evaluate("LessThan(Array('1', '4'), 3)") as IEnumerable));
-	        Assert.That(new double[]{0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("LessOrEqual(Range(0, 3), 3)") as IEnumerable));
-	        Assert.That(new double[]{0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("le(Range(0, 3), 3)") as IEnumerable));
-	        
-	        Assert.That(new double[]{2, 3}, Is.EquivalentTo(engine.Evaluate("GreaterThan(Range(0, 3), 1)") as IEnumerable));
-	        Assert.That(new double[]{2, 3}, Is.EquivalentTo(engine.Evaluate("gt(Range(0, 3), 1)") as IEnumerable));
-	        Assert.That(new double[]{1, 2, 3}, Is.EquivalentTo(engine.Evaluate("GreaterOrEqual(Range(0, 3), 1)") as IEnumerable));
-	        Assert.That(new double[]{1, 2, 3}, Is.EquivalentTo(engine.Evaluate("ge(Range(0, 3), 1)") as IEnumerable));
-	        Assert.That(new double[]{4.5, 5.5}, Is.EquivalentTo(engine.Evaluate("ge(Array(Decimal, Double), 1)") as IEnumerable));
-	        
             // COMPARE TESTS
-	        engine.Test("5=5"   , true);
-			engine.Test("'2'='2'", true);
-			engine.Test("5==5"  , true);
-            engine.Test("6==5"  , false);
-            engine.Test("6=5"   , false);
-            engine.Test("6<5"   , false);
-            engine.Test("6>5"   , true);
-            engine.Test("5<=10" , true);
-            engine.Test("5>=3"  , true);
-	        engine.Test("'Viis'>='Üks'"  , false);
+            engine.Test("5=5", true);
+            engine.Test("'2'='2'", true);
+            engine.Test("5==5", true);
+            engine.Test("6==5", false);
+            engine.Test("6=5", false);
+            engine.Test("6<5", false);
+            engine.Test("6>5", true);
+            engine.Test("5<=10", true);
+            engine.Test("5>=3", true);
+            engine.Test("'Viis'>='Üks'", false);
 
             // LOGICAL FUNCTION TESTS
 
-            engine.Test("5<=6.0 && 6>=3"  , true);
-	        engine.Test("true"   , true);
-            engine.Test("true  && true"   , true);
-            engine.Test("true  && false"  , false);
-            engine.Test("false && true"   , false);
-            engine.Test("false && false"  , false);
-            engine.Test("true  || true"   , true);
-            engine.Test("true  || false"  , true);
-            engine.Test("false || true"   , true);
-            engine.Test("false || false"  , false);
+            engine.Test("5<=6.0 && 6>=3", true);
+            engine.Test("true", true);
+            engine.Test("true  && true", true);
+            engine.Test("true  && false", false);
+            engine.Test("false && true", false);
+            engine.Test("false && false", false);
+            engine.Test("true  || true", true);
+            engine.Test("true  || false", true);
+            engine.Test("false || true", true);
+            engine.Test("false || false", false);
 
             engine.Test("AND(true, true)", true);
             engine.Test("AND(true, false)", false);
@@ -187,8 +225,8 @@ namespace Zirpl.CalcEngine.Portable.Tests
             engine.Test("SINH(1.23)", Math.Sinh(1.23));
             engine.Test("SQRT(144)", Math.Sqrt(144));
             engine.Test("SUM(1, 2, 3, 4)", 1 + 2 + 3 + 4.0);
-	        engine.Test("MAX(1.4, 2, 3, 4.5)", 4.5);
-	        engine.Test("MIN(1.4, 2, 3, 4.5)", 1.4);
+            engine.Test("MAX(1.4, 2, 3, 4.5)", 4.5);
+            engine.Test("MIN(1.4, 2, 3, 4.5)", 1.4);
             engine.Test("TAN(1.23)", Math.Tan(1.23));
             engine.Test("TANH(1.23)", Math.Tanh(1.23));
             engine.Test("TRUNC(1.23)", 1.0);
@@ -213,8 +251,8 @@ namespace Zirpl.CalcEngine.Portable.Tests
             engine.Test("CHAR(65)", "A");
             //engine.Test("CODE(\"A\")", 65);
             engine.Test("CONCATENATE(\"a\", \"b\")", "ab");
-			engine.Test("CONCATENATE('a', 'b')", "ab");
-			engine.Test("FIND(\"bra\", \"abracadabra\")", 2);
+            engine.Test("CONCATENATE('a', 'b')", "ab");
+            engine.Test("FIND(\"bra\", \"abracadabra\")", 2);
             engine.Test("FIND(\"BRA\", \"abracadabra\")", -1);
             engine.Test("LEFT(\"abracadabra\", 3)", "abr");
             engine.Test("LEFT(\"abracadabra\")", "a");
@@ -233,9 +271,9 @@ namespace Zirpl.CalcEngine.Portable.Tests
             engine.Test("TRIM(\"   hello   \")", "hello");
             engine.Test("UPPER(\"abracadabra\")", "ABRACADABRA");
             engine.Test("VALUE(\"1234\")", 1234.0);
-	        engine.Test("PadLeft(1254, 6, \"0\")", "001254");
-	        engine.Test("PadRight(1254, 6, \"0\")", "125400");
-	        engine.Test("AffixIF(1254, \"p\", \"s\")", "p1254s");
+            engine.Test("PadLeft(1254, 6, \"0\")", "001254");
+            engine.Test("PadRight(1254, 6, \"0\")", "125400");
+            engine.Test("AffixIF(1254, \"p\", \"s\")", "p1254s");
 
             engine.Test("SUBSTITUTE(\"abcabcabc\", \"a\", \"b\")", "bbcbbcbbc");
             engine.Test("SUBSTITUTE(\"abcabcabc\", \"a\", \"b\", 1)", "bbcabcabc");
@@ -248,7 +286,6 @@ namespace Zirpl.CalcEngine.Portable.Tests
             engine.Test(exp.Replace("A1", a1), "books");
 
 
-
             // STATISTICAL FUNCTION TESTS
             engine.Test("Average(1, 3, 3, 1, true, false, \"hello\")", 2.0);
             engine.Test("AverageA(1, 3, 3, 1, true, false, \"hello\")", (1 + 3 + 3 + 1 + 1 + 0 + 0) / 7.0);
@@ -259,56 +296,53 @@ namespace Zirpl.CalcEngine.Portable.Tests
             engine.CultureInfo = cultureInfo;
         }
 
-	    [Test]
-	    public void Parse()
-	    {
+        [Test]
+        public void Parse_Test()
+        {
             CalculationEngine engine = new CalculationEngine();
-			
-			// test DataContext
-			var dc = engine.DataContext;
-			var p = TestPerson.CreateTestPerson();
-			engine.DataContext = p;
 
-		    var expression = engine.Parse("Parent.Children(2).Address");
-			var expression1 = engine.Parse("Parent.ChildrenDct('Test Child 58').Address");
-			
-			//expression.Validate();
-			//expression1.Validate();
+            // test DataContext
+            var dc = engine.DataContext;
+            var p = TestPerson.CreateTestPerson();
+            engine.DataContext = p;
 
-			p.Parent = TestPerson.CreateTestPerson();
-			p.Parent.Address = new Address { Street = "sdf" };
-		    Assert.Throws<CalcEngineBindingException>(() =>
-		    {
-			    expression1.Evaluate();
-		    });	
-	    }
+            var expression = engine.Parse("Parent.Children(2).Address");
+            var expression1 = engine.Parse("Parent.ChildrenDct('Test Child 58').Address");
 
-		[Test]
-		public void Units()
-		{
-			CalculationEngine engine = new CalculationEngine();
+            //expression.Validate();
+            //expression1.Validate();
 
-			var p =	new UnitModel
-			{
-				This = TestPerson.CreateTestPerson()
-			};
+            p.Parent = TestPerson.CreateTestPerson();
+            p.Parent.Address = new Address {Street = "sdf"};
+            Assert.Throws<CalcEngineBindingException>(() => { expression1.Evaluate(); });
+        }
 
-			engine.DataContext = p;
+        [Test]
+        public void Units_Test()
+        {
+            CalculationEngine engine = new CalculationEngine();
 
-			var expression = engine.Parse("This.Age*Y*5.0000");
-			
-			Console.WriteLine(expression.Evaluate());
-		}
-	}
+            var p = new UnitModel
+            {
+                This = TestPerson.CreateTestPerson()
+            };
 
-	public class UnitModel
-	{
-		public object This { get; set; }
+            engine.DataContext = p;
 
-		public double M => 1;
-		public double S => M/60;
-		public double H => M*60;
-		public double D => M * 24;
-		public double Y => D * 365;
-	}
+            var expression = engine.Parse("This.Age*Y*5.0000");
+
+            Console.WriteLine(expression.Evaluate());
+        }
+    }
+
+    internal class UnitModel
+    {
+        public object This { get; set; }
+
+        public double M => 1;
+        public double S => M / 60;
+        public double H => M * 60;
+        public double D => M * 24;
+        public double Y => D * 365;
+    }
 }

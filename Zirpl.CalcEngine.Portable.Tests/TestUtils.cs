@@ -1,24 +1,30 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Zirpl.CalcEngine.Portable.Tests
+namespace Zirpl.CalcEngine.Tests
 {
     public static class TestUtils
     {
-        public static void Test<T>(this CalculationEngine engine, string expression, T expectedResult)
+        public static void Test<T>(this CalculationEngine engine, string expression, T expectedResult, string expectedParsedExpression = null)
         {
             var result = engine.Evaluate<T>(expression);
 
-            if (!object.Equals(result, expectedResult))
+            if (expectedParsedExpression != null)
             {
-                var msg = string.Format("error: {0} gives {1}, should give {2}", expression, result, expectedResult);
+                if (!string.Equals(expectedParsedExpression, engine.ParsedExpression))
+                {
+                    var msg = $"error: {engine.ParsedExpression} should equal {expectedParsedExpression}";
+                    throw new Exception(msg);
+                }
+            }
+            
+            if (!Equals(result, expectedResult))
+            {
+                var msg = $"error: {expression} gives {result}, should give {expectedResult}";
                 throw new Exception(msg);
             }
+
+            Console.WriteLine(engine.ParsedExpression);
         }
 
         private static bool IsArray(object value)

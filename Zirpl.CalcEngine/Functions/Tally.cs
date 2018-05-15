@@ -31,7 +31,17 @@ namespace Zirpl.CalcEngine
             }
 
             // handle expressions
-            AddValue(e.Evaluate());
+            var o = e.Evaluate();
+            ienum = o as IEnumerable;
+            if (ienum != null && !(o is string))
+            {
+                foreach (var value in ienum)
+                {
+                    AddValue(value);
+                }
+                return;
+            }
+            AddValue(o);
         }
         void AddValue(object value)
         {

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -110,15 +111,23 @@ namespace Zirpl.CalcEngine
         /// method and then using the Expression.Evaluate method to evaluate
         /// the parsed expression.
         /// </remarks>
-        public object Evaluate(string expression, bool throwOnInvalidBindingExpression = true)
+        public object Evaluate(string expression, bool throwOnInvalidBindingExpression = true, bool logBindingExpressionValues = true)
         {
             ThrowOnInvalidBindingExpression = throwOnInvalidBindingExpression;
+            LogBindingExpressionValues = logBindingExpressionValues;
 
             var x = _cache != null
                 ? _cache[expression]
                 : Parse(expression);
-            return x.Evaluate();
+
+            var o = x.Evaluate();
+            if (logBindingExpressionValues)
+            {
+                ParsedExpression = ParsedExpressionHelper.ParseBindings(x, expression);
+            }
+            return o;
         }
+
 
         /// <summary>
         /// Evaluates a string.
@@ -265,6 +274,16 @@ namespace Zirpl.CalcEngine
         {
             RegisterFunction(functionName, parmCount, parmCount, fn);
         }
+        
+        public void RegisterFunction(string functionName, int parmMin, int parmMax, CalcEngineContextFunction fn)
+        {
+            _fnTbl.Add(functionName, new FunctionDefinition(parmMin, parmMax, fn));
+        }
+        
+        public void RegisterFunction(string functionName, int parmCount, CalcEngineContextFunction fn)
+        {
+            RegisterFunction(functionName, parmCount, parmCount, fn);
+        }
 
         /// <summary>
         /// Gets an external object based on an identifier.
@@ -328,6 +347,8 @@ namespace Zirpl.CalcEngine
 
         public bool InValidation { get; set; }
         public bool ThrowOnInvalidBindingExpression { get; set; } = true;
+        public bool LogBindingExpressionValues { get; set; } = true;
+        public string ParsedExpression { get; set; }
 
         #endregion
 
@@ -529,7 +550,7 @@ namespace Zirpl.CalcEngine
                             Throw("Too many parameters.");
                         }
 
-                        x = new FunctionExpression(fnDef, p);
+                        x = new FunctionExpression(fnDef, p, this);
                         break;
                     }
 
@@ -537,7 +558,7 @@ namespace Zirpl.CalcEngine
                     if (_vars.ContainsKey(id))
                     {
                         var p = GetIndexes();
-                        x = new VariableExpression(_vars, id, p);
+                        x = new VariableExpression(this, _vars, id, p);
                         break;
                     }
 
@@ -552,13 +573,20 @@ namespace Zirpl.CalcEngine
                     // look for bindings
                     if (DataContext != null)
                     {
+                        var startIndex = _ptr - id.Length;
+                        string tokenString = _token.Value.ToString();
                         var list = new List<BindingInfo>();
                         for (var t = _token; t != null; t = GetMember())
                         {
                             list.Add(new BindingInfo((string) t.Value, GetParameters()));
+                            tokenString += _token.Value.ToString();
                         }
 
-                        x = new BindingExpression(this, list, _ci);
+                        var endIndex = _ptr;
+
+                        var substring = _expr.Substring(startIndex, endIndex - startIndex);
+
+                        x = new BindingExpression(this, list, _ci, substring);
                         break;
                     }
 
@@ -855,10 +883,17 @@ namespace Zirpl.CalcEngine
         {
             if (_ptr == 0)
             {
-                return "[" + _token.Value + "]";
+                var tokenValue = _token?.Value?.ToString();
+                var rest = string.Join("", _expr.Skip(1).ToArray());
+                if (string.IsNullOrWhiteSpace(tokenValue))
+                {
+                    tokenValue = _expr.First().ToString();
+                    
+                }
+                return $"[{tokenValue}]{rest}";
             }
 
-            return _expr.Substring(0, _ptr - 1) + "[" + _token.Value + "]" + _expr.Substring(_ptr);
+            return $"{_expr.Substring(0, _ptr - 1)}[{_token.Value}]{_expr.Substring(_ptr)}";
         }
 
         static double ParseDouble(string str, CultureInfo ci)

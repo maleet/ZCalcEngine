@@ -12,8 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{32D323
 		.nuget\build.ps1 = .nuget\build.ps1
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zirpl.CalcEngine.Portable", "Zirpl.CalcEngine.Portable\Zirpl.CalcEngine.Portable.csproj", "{96F8314F-4599-490D-B18E-D05D32B13842}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zirpl.CalcEngine.Tests", "Zirpl.CalcEngine.Portable.Tests\Zirpl.CalcEngine.Tests.csproj", "{C1C81EC6-8368-4282-8475-BB36E8DD222F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{91B683C2-FDBE-4381-BAE7-5294E1F57D1A}"
@@ -35,16 +33,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Release|Any CPU.Build.0 = Release|Any CPU
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{96F8314F-4599-490D-B18E-D05D32B13842}.Release|x86.ActiveCfg = Release|Any CPU
 		{C1C81EC6-8368-4282-8475-BB36E8DD222F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C1C81EC6-8368-4282-8475-BB36E8DD222F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1C81EC6-8368-4282-8475-BB36E8DD222F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU

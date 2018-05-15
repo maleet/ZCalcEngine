@@ -12,4 +12,6 @@ namespace Zirpl.CalcEngine
     /// parameters to be used in the function call.</param>
     /// <returns>The function result.</returns>
     public delegate object CalcEngineFunction(List<Expression> parms);
+    
+    public delegate object CalcEngineContextFunction(CalculationEngine calculationEngine, List<Expression> parms);
 }

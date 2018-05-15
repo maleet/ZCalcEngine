@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Zirpl.CalcEngine.Portable.Tests
+namespace Zirpl.CalcEngine.Tests
 {
     public class TestPerson
     {
@@ -21,6 +19,8 @@ namespace Zirpl.CalcEngine.Portable.Tests
         public List<TestPerson> Children { get; set; }
 
 	    public int? Age => Birth == null ? (int?) null : DateTime.Today.Year - Birth.Value.Year;
+	    public double? Weight => Age / 0.1;
+	    public decimal? Salary => Age * 55.1M;
 
 	    public Dictionary<string, TestPerson> ChildrenDct
 	    {
@@ -38,11 +38,27 @@ namespace Zirpl.CalcEngine.Portable.Tests
 			}
 		}
 	    
-	    public Dictionary<string, object> ChildrenObjectDct
+	    public Dictionary<string, object> ChildrenAgeDct
 	    {
 		    get
 		    {
 			    return Children.ToDictionary(person => person.Name, person => person.Age as object);
+		    }
+	    }
+	    
+	    public Dictionary<string, object> ChildrenWeightDct
+	    {
+		    get
+		    {
+			    return Children.ToDictionary(person => person.Name, person => person.Weight as object);
+		    }
+	    }
+	    
+	    public Dictionary<string, object> ChildrenSalaryDct
+	    {
+		    get
+		    {
+			    return Children.ToDictionary(person => person.Name, person => person.Salary as object);
 		    }
 	    }
 

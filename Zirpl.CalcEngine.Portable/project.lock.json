@@ -18467,7 +18467,8 @@
     ".NETPlatform,Version=v5.0": []
   },
   "packageFolders": {
-    "C:\\Users\\mart.LEANEST\\.nuget\\packages\\": {}
+    "C:\\Users\\mart.LEANEST\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\": {}
   },
   "project": {
     "restore": {
@@ -18477,10 +18478,14 @@
       "projectJsonPath": "D:\\Github\\maleet\\ZCalcEngine\\Zirpl.CalcEngine.Portable\\project.json",
       "packagesPath": "C:\\Users\\mart.LEANEST\\.nuget\\packages\\",
       "projectStyle": "ProjectJson",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackagesFallback\\"
+      ],
       "configFilePaths": [
         "D:\\Github\\maleet\\ZCalcEngine\\.nuget\\NuGet.Config",
         "C:\\Users\\mart.LEANEST\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.Fallback.config"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},

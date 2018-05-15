@@ -12,6 +12,7 @@ namespace Zirpl.CalcEngine
         // ** fields
         public int ParmMin, ParmMax;
         public CalcEngineFunction Function;
+        public CalcEngineContextFunction ContextFunction;
 
         // ** ctor
         public FunctionDefinition(int parmMin, int parmMax, CalcEngineFunction function)
@@ -19,6 +20,13 @@ namespace Zirpl.CalcEngine
             ParmMin = parmMin;
             ParmMax = parmMax;
             Function = function;
+        }
+        
+        public FunctionDefinition(int parmMin, int parmMax, CalcEngineContextFunction function)
+        {
+            ParmMin = parmMin;
+            ParmMax = parmMax;
+            ContextFunction = function;
         }
     }
 }

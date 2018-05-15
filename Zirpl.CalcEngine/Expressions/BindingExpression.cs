@@ -14,22 +14,33 @@ namespace Zirpl.CalcEngine
     public class BindingExpression : Expression
     {
         public CalculationEngine CalculationEngine { get; }
+        public object Value { get; set; }
         List<BindingInfo> _bindingPath;
         CultureInfo _ci;
+        internal readonly string _expression;
 
         // ** ctor
-        internal BindingExpression(CalculationEngine engine, List<BindingInfo> bindingPath, CultureInfo ci)
+        internal BindingExpression(CalculationEngine engine, List<BindingInfo> bindingPath, CultureInfo ci, string expression)
         {
             CalculationEngine = engine;
             _bindingPath = bindingPath;
             _ci = ci;
+            _expression = expression;
         }
 
         // ** object model
         public override object Evaluate()
         {
-            return GetValue(CalculationEngine.DataContext);
+            var value = GetValue(CalculationEngine.DataContext);
+            if (CalculationEngine.LogBindingExpressionValues)
+            {
+                this.Value = value;
+            }
+
+            return value;
         }
+
+        
 
         // ** implementation
         object GetValue(object obj)
@@ -57,7 +68,7 @@ namespace Zirpl.CalcEngine
 
                 if (obj == null)
                 {
-                    var s = GetBindingPath(_bindingPath, index);
+                    var s = GetBindingPath(index);
 
                     throw new CalcEngineBindingException($"Binding path invalid (value is null): {s}", prevObj, initialObj);
                 }
@@ -73,7 +84,7 @@ namespace Zirpl.CalcEngine
 
                 if (!isGenericList && bi.PropertyInfo == null)
                 {
-                    var s = GetBindingPath(_bindingPath, index);
+                    var s = GetBindingPath(index);
                     throw new CalcEngineBindingException($"'{bi.Name}' is not valid property of {type.Name} in path '{s}'", obj, prevObj, initialObj, s, type, _bindingPath);
                 }
 
@@ -145,7 +156,7 @@ namespace Zirpl.CalcEngine
                             {
                                 if (CalculationEngine.ThrowOnInvalidBindingExpression)
                                 {
-                                    var s = GetBindingPath(_bindingPath, index);
+                                    var s = GetBindingPath(index);
                                     
                                     throw new CalcEngineBindingException($"'{bi.Name}' of '{prevObj.ToString()}' ({type.Name}) don't have key(s) '{string.Join("; ", list.Select(o1 => o1.ToString()))}'", obj, prevObj, initialObj, s, type, _bindingPath);
                                 }
@@ -168,13 +179,17 @@ namespace Zirpl.CalcEngine
             return all.FirstOrDefault(x => x.DeclaringType == type) ?? all.FirstOrDefault();
         }
 
-        private string GetBindingPath(List<BindingInfo> bindingPath, int index)
+        public string GetBindingPath(int index = -1)
         {
-            var before = _bindingPath.Take(index).Select(info => info.Name).ToList();
-            var beforePath = _bindingPath[index];
-            var after = _bindingPath.Skip(index + 1).Select(info => info.Name).ToList();
+            if (index >= 0)
+            {
+                var before = _bindingPath.Take(index).Select(info => info.Name).ToList();
+                var beforePath = _bindingPath[index];
+                var after = _bindingPath.Skip(index + 1).Select(info => info.Name).ToList();
 
-            return string.Join(".", before) + (before.Count > 0 ? "." : "") + "[" + beforePath.Name + "]" + (after.Count > 0 ? "." : "") + string.Join(".", after);
+                return string.Join(".", before) + (before.Count > 0 ? "." : "") + "[" + beforePath.Name + "]" + (after.Count > 0 ? "." : "") + string.Join(".", after);    
+            }
+            return string.Join(".", _bindingPath.Select(info => info.Name));
         }
 
         private object CreateInstance(Type propertyType)

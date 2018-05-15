@@ -222,19 +222,37 @@ namespace Zirpl.CalcEngine
         {
             var enumerable = parms[0].Evaluate() as IEnumerable;
             var numbers = new List<double>();
-            foreach (var v in enumerable)
+            if (enumerable != null)
             {
-                try
+                foreach (var v in enumerable)
                 {
-                    numbers.Add(Convert.ToDouble(v));
-                }
-                catch (InvalidCastException e)
-                {
+                    try
+                    {
+                        
+                        numbers.Add(TryConvert(v));
+                    }
+                    catch (InvalidCastException e)
+                    {
+                    }
                 }
             }
 
-            max = Convert.ToDouble(parms[1].Evaluate());
+            var o = parms[1].Evaluate();
+            max = TryConvert(o);
             return numbers;
+        }
+
+        private static double TryConvert(object o)
+        {
+            try
+            {
+                return Convert.ToDouble(o);
+            }
+            catch (InvalidCastException e)
+            {
+            }
+
+            return 0;
         }
     }
 }
