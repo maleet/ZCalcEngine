@@ -80,8 +80,8 @@ namespace Zirpl.CalcEngine
                     bi.PropertyInfo = GetProperty(type, bi.Name, bf);
                 }
 
-                var isGenericList = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
-
+                var isGenericList = IsList(type);
+                
                 if (!isGenericList && bi.PropertyInfo == null)
                 {
                     var s = GetBindingPath(index);
@@ -125,12 +125,8 @@ namespace Zirpl.CalcEngine
                     {
                         var o = obj;
 
-                        var isGenericType = o.GetType().IsGenericType;
-                        var genericTypeDefinition = o.GetType().GetGenericTypeDefinition();
-
-                        var isList = isGenericType &&
-                                     genericTypeDefinition.IsAssignableFrom(typeof(List<>));
-
+                        
+                        var isList = IsList(o.GetType());
                         if (isList)
                         {
                             obj = bi.PropertyInfoItem.GetValue(obj, list.ToArray());
@@ -141,13 +137,17 @@ namespace Zirpl.CalcEngine
 
                             var containsKey = false;
 
-                            foreach (var key in dictionary.Keys)
+                            if (dictionary != null)
                             {
-                                if (list.Contains(key))
+                                foreach (var key in dictionary.Keys)
                                 {
-                                    containsKey = true;
+                                    if (list.Contains(key))
+                                    {
+                                        containsKey = true;
+                                    }
                                 }
                             }
+
                             if (containsKey)
                             {
                                 obj = bi.PropertyInfoItem.GetValue(obj, list.ToArray());
@@ -158,7 +158,7 @@ namespace Zirpl.CalcEngine
                                 {
                                     var s = GetBindingPath(index);
                                     
-                                    throw new CalcEngineBindingException($"'{bi.Name}' of '{prevObj.ToString()}' ({type.Name}) don't have key(s) '{string.Join("; ", list.Select(o1 => o1.ToString()))}'", obj, prevObj, initialObj, s, type, _bindingPath);
+                                    throw new CalcEngineBindingException($"'{bi.Name}' of '{prevObj}' ({type.Name}) don't have key(s) '{string.Join("; ", list.Select(o1 => o1.ToString()))}'", obj, prevObj, initialObj, s, type, _bindingPath);
                                 }
                                 obj = CreateInstance(bi.PropertyInfoItem.PropertyType);
                             }
@@ -171,6 +171,11 @@ namespace Zirpl.CalcEngine
 
             // all done
             return obj;
+        }
+
+        private bool IsList(Type type)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
         }
 
         private PropertyInfo GetProperty(Type type, string biName, BindingFlags bf)
