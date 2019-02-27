@@ -2,6 +2,7 @@
 using System.Net;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Zirpl.CalcEngine
 {
@@ -24,6 +25,7 @@ namespace Zirpl.CalcEngine
             ce.RegisterFunction("COUNTA", 1, int.MaxValue, CountA);
             ce.RegisterFunction("COUNTBLANK", 1, int.MaxValue, CountBlank);
             ce.RegisterFunction("COUNTIF", 2, CountIf);
+            
             //COVAR	Returns covariance, the average of the products of paired deviations
             //CRITBINOM	Returns the smallest value for which the cumulative binomial distribution is less than or equal to a criterion value
             //DEVSQ	Returns the sum of squares of deviations
@@ -134,9 +136,8 @@ namespace Zirpl.CalcEngine
                 value == null || 
                 value is string && ((string)value).Length == 0;
         }
-        static object CountIf(List<Expression> p)
+        static object CountIf(CalculationEngine ce, List<Expression> p)
         {
-            CalculationEngine ce = new CalculationEngine();
             var cnt = 0.0;
             var ienum = p[0] as IEnumerable;
             if (ienum != null)

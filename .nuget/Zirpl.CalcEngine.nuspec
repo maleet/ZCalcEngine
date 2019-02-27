@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Zirpl.CalcEngine</id>
-    <version>1.0.39</version>
+    <version>$version$</version>
     <title>CalcEngine</title>
     <authors>Zirpl Software</authors>
     <owners>Zirpl Software</owners>

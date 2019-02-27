@@ -6,6 +6,8 @@ namespace Zirpl.CalcEngine.Tests
 {
     public class TestPerson
     {
+	    public decimal m => 1;
+	    public decimal h => 1/60;
         public TestPerson()
         {
             Children = new List<TestPerson>();

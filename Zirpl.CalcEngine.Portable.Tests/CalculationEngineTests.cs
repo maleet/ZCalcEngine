@@ -12,7 +12,7 @@ namespace Zirpl.CalcEngine.Tests
         [Test]
         public void Array_Test()
         {
-            CalculationEngine engine = new CalculationEngine();
+            CalculationEngine engine = new CalculationEngine(new ServiceProvider());
 
             // adjust culture
             var cultureInfo = engine.CultureInfo;
@@ -28,14 +28,19 @@ namespace Zirpl.CalcEngine.Tests
             engine.Variables.Add("Double", 5.5);
             engine.Variables.Add("D310", 310M);
             engine.Variables.Add("D32", 32M);
+            engine.Variables.Add("h", 1/60);
+            engine.Variables.Add("m", 1/60/60);
+            engine.Test("105m/(4*2380)", 105*(1/60/60)/(4*2380));
+            engine.Test("5h", 5*1/60);
 
             engine.Test("D310>=250 && D32<=315", true);
-
+            
             engine.Test("A", array);
             engine.Test("B", strings);
             engine.Test("Max(Array(5,6,7))", 7);
             engine.Test("Number", 55);
             engine.Test("Max(Number, 5,33)", 55);
+            engine.Test("Max(Number, 5.33)", 55);
             engine.Test("Min(Number, 5,88, Decimal)", 4.5M, "Min(55, 5,88, 4,5)");
 
             Assert.That(new double[] {0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("Range(0, 3)") as IEnumerable));
@@ -66,7 +71,7 @@ namespace Zirpl.CalcEngine.Tests
         [Test]
         public static void DataContext_Tests()
         {
-            CalculationEngine engine = new CalculationEngine();
+            CalculationEngine engine = new CalculationEngine(new ServiceProvider());
 
             // adjust culture
             var cultureInfo = engine.CultureInfo;
@@ -77,6 +82,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.DataContext = p;
 
             engine.Test("Name", "Test Person");
+            engine.Test("1h", 1/60);
 
             engine.Test("HASH(Name)", "53A4E9EC08910DE9BB6EDAA99F8C867C");
             engine.Test("HASH('Name')", "49EE3087348E8D44E1FEDA1917443987");
@@ -89,10 +95,11 @@ namespace Zirpl.CalcEngine.Tests
 
             engine.Test("15*ChildrenDct(\"Test Child 2\").Age+14", (15 * p.ChildrenDct["Test Child 2"].Age + 14).Value);
             engine.Test("ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
-            Assert.Throws<CalcEngineBindingException>(() =>
+            var ex = Assert.Throws<CalcEngineBindingException>(() =>
             {
                 var d = engine.Evaluate<double>("ChildrenAgeDct('Test Child 10') * 2");
             });
+            Assert.That(ex.Message, Is.EqualTo("'ChildrenAgeDct' of 'Zirpl.CalcEngine.Tests.TestPerson' (TestPerson) don't have key(s) 'Test Child 10'"));
 
             Assert.AreEqual(0, engine.Evaluate<double>("ChildrenAgeDct('Test Child 10') * 2", false));
             Assert.AreEqual(2, engine.Evaluate<double>("ChildrenAgeDct('Test Child 10') + 2", false));
@@ -120,20 +127,39 @@ namespace Zirpl.CalcEngine.Tests
         }
 
         [Test]
+        public static void GenericDataContext_Tests()
+        {
+            var testPersonCalculationEngine = new TestPersonCalculationEngine();
+            // DataContext functions
+            testPersonCalculationEngine.RegisterFunction("GetParent", 0, (calculationEngine, parms) =>
+            {
+                var personCalculationEngine = calculationEngine as TestPersonCalculationEngine;
+                return personCalculationEngine.DataContext.Name;
+            });
+            
+            var p = TestPerson.CreateTestPerson();
+            p.Parent = TestPerson.CreateTestPerson();
+            testPersonCalculationEngine.DataContext = p;
+            testPersonCalculationEngine.Test("GetParent()", p.Name);
+        }
+
+        [Test]
         public void Functions_Test()
         {
-            CalculationEngine engine = new CalculationEngine();
+            CalculationEngine engine = new CalculationEngine(new ServiceProvider());
 
             // adjust culture
             var cultureInfo = engine.CultureInfo;
             engine.CultureInfo = CultureInfo.InvariantCulture;
 
             // test invalid parsing
-            Assert.Throws<Exception>(() =>
+            var ex = Assert.Throws<Exception>(() =>
             {
-                var d = engine.Evaluate<string>("$ELO: 1 #Amor: ei ole 1");
+                var d = engine.Evaluate<string>("Max(1,2,3)KalleKusta");
             });
 
+            Assert.That(ex.Message, Is.EqualTo("Syntax error. Expression: Max(1,2,3)[KalleKusta]"));
+            
             // test internal operators
             engine.Test("0", 0.0);
             engine.Test("+1", 1.0);
@@ -299,7 +325,7 @@ namespace Zirpl.CalcEngine.Tests
         [Test]
         public void Parse_Test()
         {
-            CalculationEngine engine = new CalculationEngine();
+            CalculationEngine engine = new CalculationEngine(new ServiceProvider());
 
             // test DataContext
             var dc = engine.DataContext;
@@ -320,7 +346,7 @@ namespace Zirpl.CalcEngine.Tests
         [Test]
         public void Units_Test()
         {
-            CalculationEngine engine = new CalculationEngine();
+            CalculationEngine engine = new CalculationEngine(new ServiceProvider());
 
             var p = new UnitModel
             {
@@ -332,6 +358,13 @@ namespace Zirpl.CalcEngine.Tests
             var expression = engine.Parse("This.Age*Y*5.0000");
 
             Console.WriteLine(expression.Evaluate());
+        }
+    }
+
+    public class TestPersonCalculationEngine : CalculationEngine<TestPerson>
+    {
+        public TestPersonCalculationEngine() : base(new ServiceProvider())
+        {
         }
     }
 

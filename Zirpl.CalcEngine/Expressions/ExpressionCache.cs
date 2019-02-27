@@ -11,7 +11,7 @@ namespace Zirpl.CalcEngine
     /// <remarks>
     /// Uses weak references to avoid accumulating unused expressions.
     /// </remarks>
-    class ExpressionCache
+    public class ExpressionCache
     {
         Dictionary<string, WeakReference> _dct;
         CalculationEngine _ce;

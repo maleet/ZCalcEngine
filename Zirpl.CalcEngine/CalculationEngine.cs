@@ -10,6 +10,19 @@ using System.Text.RegularExpressions;
 
 namespace Zirpl.CalcEngine
 {
+    public class CalculationEngine<T> : CalculationEngine where T : class
+    {
+        public CalculationEngine(IServiceProvider serviceProvider) : base(serviceProvider)
+        {
+        }
+
+        public new T DataContext
+        {
+            get => base.DataContext as T;
+            set => base.DataContext = value;
+        }
+    }
+
     /// <summary>
     /// CalcEngine parses strings and returns Expression objects that can
     /// be evaluated.
@@ -20,7 +33,7 @@ namespace Zirpl.CalcEngine
     /// <para>Use the <b>RegisterFunction</b> method to define custom functions.</para>
     /// <para>Override the <b>GetExternalObject</b> method to add arbitrary variables to the engine scope.</para>
     /// </remarks>
-    public partial class CalculationEngine
+    public class CalculationEngine
     {
         //---------------------------------------------------------------------------
 
@@ -35,11 +48,12 @@ namespace Zirpl.CalcEngine
         Dictionary<object, Token> _tkTbl; // table with tokens (+, -, etc)
         Dictionary<string, FunctionDefinition> _fnTbl; // table with constants and functions (pi, sin, etc)
         Dictionary<string, object> _vars; // table with variables
-        object _dataContext; // object with properties
         bool _optimize; // optimize expressions when parsing
-        ExpressionCache _cache; // cache with parsed expressions
+        protected ExpressionCache _cache; // cache with parsed expressions
         CultureInfo _ci; // culture info used to parse numbers/dates
         char _decimal, _listSep, _percent; // localized decimal separator, list separator, percent sign
+        private object _dataContext;
+        public IServiceProvider ServiceProvider { get; }
 
         #endregion
 
@@ -47,13 +61,14 @@ namespace Zirpl.CalcEngine
 
         #region ** ctor
 
-        public CalculationEngine()
+        public CalculationEngine(IServiceProvider serviceProvider)
         {
             CultureInfo = CultureInfo.InvariantCulture;
             _tkTbl = GetSymbolTable();
             _fnTbl = GetFunctionTable();
             _vars = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             _cache = new ExpressionCache(this);
+            ServiceProvider = serviceProvider ?? new ServiceProvider();
             _optimize = true;
         }
 
@@ -87,7 +102,7 @@ namespace Zirpl.CalcEngine
             // check for errors
             if (_token.ID != TokenId.END)
             {
-                Throw(GetCurrentTokenError());
+                Throw();
             }
 
             // optimize expression
@@ -104,6 +119,9 @@ namespace Zirpl.CalcEngine
         /// Evaluates a string.
         /// </summary>
         /// <param name="expression">Expression to evaluate.</param>
+        /// <param name="throwOnInvalidBindingExpression"></param>
+        /// <param name="logBindingExpressionValues"></param>
+        /// <param name="useCache"></param>
         /// <returns>The value of the expression.</returns>
         /// <remarks>
         /// If you are going to evaluate the same expression several times,
@@ -111,12 +129,12 @@ namespace Zirpl.CalcEngine
         /// method and then using the Expression.Evaluate method to evaluate
         /// the parsed expression.
         /// </remarks>
-        public object Evaluate(string expression, bool throwOnInvalidBindingExpression = true, bool logBindingExpressionValues = true)
+        public virtual object Evaluate(string expression, bool throwOnInvalidBindingExpression = true, bool logBindingExpressionValues = true, bool useCache = false)
         {
             ThrowOnInvalidBindingExpression = throwOnInvalidBindingExpression;
             LogBindingExpressionValues = logBindingExpressionValues;
 
-            var x = _cache != null
+            var x = _cache != null && useCache
                 ? _cache[expression]
                 : Parse(expression);
 
@@ -125,9 +143,9 @@ namespace Zirpl.CalcEngine
             {
                 ParsedExpression = ParsedExpressionHelper.ParseBindings(x, expression);
             }
+
             return o;
         }
-
 
         /// <summary>
         /// Evaluates a string.
@@ -148,11 +166,11 @@ namespace Zirpl.CalcEngine
                 throw new CalcEngineException($"Invalid cast of '{o}' ({o.GetType().Name}) to {typeof(T).Name}", expression, DataContext);
             }
         }
-        
-        public object Validate(string expression)
+
+        public virtual object Validate(string expression, bool useCache = false)
         {
             InValidation = true;
-            var x = _cache != null
+            var x = _cache != null && useCache
                 ? _cache[expression]
                 : Parse(expression);
             var o = x.Evaluate();
@@ -274,12 +292,12 @@ namespace Zirpl.CalcEngine
         {
             RegisterFunction(functionName, parmCount, parmCount, fn);
         }
-        
+
         public void RegisterFunction(string functionName, int parmMin, int parmMax, CalcEngineContextFunction fn)
         {
             _fnTbl.Add(functionName, new FunctionDefinition(parmMin, parmMax, fn));
         }
-        
+
         public void RegisterFunction(string functionName, int parmCount, CalcEngineContextFunction fn)
         {
             RegisterFunction(functionName, parmCount, parmCount, fn);
@@ -309,8 +327,8 @@ namespace Zirpl.CalcEngine
         /// </remarks>
         public virtual object DataContext
         {
-            get { return _dataContext; }
-            set { _dataContext = value; }
+            get => _dataContext;
+            set => _dataContext = value;
         }
 
         /// <summary>
@@ -861,6 +879,7 @@ namespace Zirpl.CalcEngine
                 Throw("Identifier expected.");
             }
 
+            var wasLetter = isLetter;
             // and must contain only letters/digits/_idChars
             for (i = 1; i + _ptr < _len; i++)
             {
@@ -873,10 +892,17 @@ namespace Zirpl.CalcEngine
                 }
             }
 
-            // got identifier
-            var id = _expr.Substring(_ptr, i);
-            _ptr += i;
-            _token = new Token(id, TokenId.ATOM, TokenType.IDENTIFIER);
+            if (_token?.Type == TokenType.LITERAL && (isLetter || wasLetter))
+            {
+                _token = new Token("*", TokenId.MUL, TokenType.MULDIV);
+            }
+            else
+            {
+                // got identifier
+                var id = _expr.Substring(_ptr, i);
+                _ptr += i;
+                _token = new Token(id, TokenId.ATOM, TokenType.IDENTIFIER);    
+            }
         }
 
         private string GetCurrentTokenError()
@@ -888,12 +914,12 @@ namespace Zirpl.CalcEngine
                 if (string.IsNullOrWhiteSpace(tokenValue))
                 {
                     tokenValue = _expr.First().ToString();
-                    
                 }
+
                 return $"[{tokenValue}]{rest}";
             }
 
-            return $"{_expr.Substring(0, _ptr - 1)}[{_token.Value}]{_expr.Substring(_ptr)}";
+            return $"{_expr.Substring(0, _ptr - (_token?.Value?.ToString() ?? "").Length)}[{_token?.Value}]{_expr.Substring(_ptr)}";
         }
 
         static double ParseDouble(string str, CultureInfo ci)
@@ -950,7 +976,7 @@ namespace Zirpl.CalcEngine
             // done
             return parms;
         }
-        
+
         List<Expression> GetIndexes() // e.g. myArray[a]
         {
             // check whether next token is a (, 
@@ -964,7 +990,7 @@ namespace Zirpl.CalcEngine
                 _token = tk;
                 return null;
             }
- 
+
             // check for empty Parameter list
             pos = _ptr;
             GetToken();
@@ -972,8 +998,9 @@ namespace Zirpl.CalcEngine
             {
                 return null;
             }
+
             _ptr = pos;
- 
+
             // get Parameters until we reach the end of the list
             var parms = new List<Expression>();
             var expr = ParseExpression();
@@ -983,13 +1010,13 @@ namespace Zirpl.CalcEngine
                 expr = ParseExpression();
                 parms.Add(expr);
             }
- 
+
             // make sure the list was closed correctly
             if (_token.ID != TokenId.SCLOSE)
             {
                 Throw();
             }
- 
+
             // done
             return parms;
         }
@@ -1024,9 +1051,9 @@ namespace Zirpl.CalcEngine
 
         #region ** static helpers
 
-        void Throw(string msg = "Syntax error.")
+        void Throw(string msg = "Syntax error. ")
         {
-            throw new Exception(msg + ", expression: " + GetCurrentTokenError());
+            throw new Exception(msg + "Expression: " + GetCurrentTokenError());
         }
 
         #endregion
