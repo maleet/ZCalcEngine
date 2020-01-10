@@ -217,9 +217,10 @@ namespace Zirpl.CalcEngine
             var numbers = GetNumbersAndThan(parms, out var max);
             return numbers.Where(arg => arg >= max).ToList();
         }
-
+        
         private static List<double> GetNumbersAndThan(List<Expression> parms, out double max)
         {
+            
             var enumerable = parms[0].Evaluate() as IEnumerable;
             var numbers = new List<double>();
             if (enumerable != null)

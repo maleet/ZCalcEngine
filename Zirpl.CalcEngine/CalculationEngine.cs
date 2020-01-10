@@ -366,7 +366,7 @@ namespace Zirpl.CalcEngine
         public bool InValidation { get; set; }
         public bool ThrowOnInvalidBindingExpression { get; set; } = true;
         public bool LogBindingExpressionValues { get; set; } = true;
-        public string ParsedExpression { get; set; }
+        public string ParsedExpression { get; private set; }
 
         #endregion
 
@@ -560,12 +560,12 @@ namespace Zirpl.CalcEngine
                         var pCnt = p == null ? 0 : p.Count;
                         if (fnDef.ParmMin != -1 && pCnt < fnDef.ParmMin)
                         {
-                            Throw("Too few parameters.");
+                            Throw("Too few parameters");
                         }
 
                         if (fnDef.ParmMax != -1 && pCnt > fnDef.ParmMax)
                         {
-                            Throw("Too many parameters.");
+                            Throw("Too many parameters");
                         }
 
                         x = new FunctionExpression(fnDef, p, this);
@@ -618,7 +618,7 @@ namespace Zirpl.CalcEngine
                     // anything other than opening parenthesis is illegal here
                     if (_token.ID != TokenId.OPEN && _token.ID != TokenId.SOPEN && _token.ID != TokenId.COPEN)
                     {
-                        Throw("Expression expected.");
+                        Throw("Expression expected");
                     }
 
                     // get expression
@@ -632,7 +632,7 @@ namespace Zirpl.CalcEngine
                         || (openParenthesis == TokenId.COPEN && closeParenthesis != TokenId.CCLOSE))
 
                     {
-                        Throw("Unbalanced parenthesis.");
+                        Throw("Unbalanced parenthesis");
                     }
 
                     break;
@@ -741,7 +741,7 @@ namespace Zirpl.CalcEngine
             // parse numbers
             if (isDigit || c == _decimal)
             {
-                var div = -1;
+                double div = -1;
                 var sci = false;
                 var pct = false;
                 var val = 0.0;
@@ -749,6 +749,10 @@ namespace Zirpl.CalcEngine
                 {
                     c = _expr[_ptr + i];
 
+                    // skip whitespace
+                    
+                    if(Char.IsWhiteSpace(c)) continue;
+                    
                     // digits always OK
                     if (c >= '0' && c <= '9')
                     {
@@ -840,7 +844,7 @@ namespace Zirpl.CalcEngine
                 // check that we got the end of the string
                 if (c != token)
                 {
-                    Throw("Can't find final quote.");
+                    Throw("Can't find final quote");
                 }
 
                 // end of string
@@ -863,7 +867,7 @@ namespace Zirpl.CalcEngine
                 // check that we got the end of the date
                 if (c != '#')
                 {
-                    Throw("Can't find final date delimiter ('#').");
+                    Throw("Can't find final date delimiter ('#')");
                 }
 
                 // end of date
@@ -876,7 +880,7 @@ namespace Zirpl.CalcEngine
             // identifiers (functions, objects) must start with alpha or underscore
             if (!isLetter && c != '_' && (_idChars == null || _idChars.IndexOf(c) < 0))
             {
-                Throw("Identifier expected.");
+                Throw("Identifier expected");
             }
 
             var wasLetter = isLetter;
@@ -1051,9 +1055,9 @@ namespace Zirpl.CalcEngine
 
         #region ** static helpers
 
-        void Throw(string msg = "Syntax error. ")
+        void Throw(string msg = "Syntax error")
         {
-            throw new Exception(msg + "Expression: " + GetCurrentTokenError());
+            throw new CalcEngineException(msg + ". Expression: " + GetCurrentTokenError(), _expr, DataContext);
         }
 
         #endregion

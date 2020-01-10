@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -37,6 +38,41 @@ namespace Zirpl.CalcEngine
 
                 return objects.ToArray();
             });
+            
+            ce.RegisterFunction("ArrayString", 1, int.MaxValue, parms =>
+            {
+                var objects = new List<object>();
+                if (parms != null)
+                {
+                    foreach (var v in parms)
+                    {
+                        objects.AddRange(v.Evaluate().ToString().Split(';').ToList());
+                    }
+                }
+
+                return objects.ToArray();
+            });
+            
+            ce.RegisterFunction("CONTAINS", 2, 3, parms =>
+            {
+                var input = parms[0].Evaluate();
+                var enumerable = input as IEnumerable ?? new Object[]{};
+                var target = parms[1].Evaluate() ?? "";
+                if (input is string s)
+                {
+                    char separator = ';';
+                    if (parms.Count == 3)
+                    {
+                        separator = (parms[3].Evaluate() as string ?? ";")[0];
+                    }
+
+                    enumerable = s.Split(separator);
+                    target = target.ToString();
+                }
+                
+                return enumerable.Cast<object>().Contains(target);
+            });
+            
 
             ce.RegisterFunction("Map", 0, int.MaxValue, parms =>
             {

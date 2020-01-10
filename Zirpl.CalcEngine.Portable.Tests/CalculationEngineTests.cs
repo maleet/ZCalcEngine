@@ -66,6 +66,14 @@ namespace Zirpl.CalcEngine.Tests
             Assert.That(new double[] {1, 2, 3}, Is.EquivalentTo(engine.Evaluate("GreaterOrEqual(Range(0, 3), 1)") as IEnumerable));
             Assert.That(new double[] {1, 2, 3}, Is.EquivalentTo(engine.Evaluate("ge(Range(0, 3), 1)") as IEnumerable));
             Assert.That(new double[] {4.5, 5.5}, Is.EquivalentTo(engine.Evaluate("ge(Array(Decimal, Double), 1)") as IEnumerable));
+            Assert.That(new String[] {"6", "7"}, Is.EquivalentTo(engine.Evaluate("ArrayString('6;7')") as IEnumerable));
+            engine.Test("Contains(Array(1,2), 2)", true);
+            engine.Test("Contains(Array(1,2), 3)", false);
+            engine.Test("Contains(Array('1','2'), 2)", false);
+            engine.Test("Contains('1;2', '2')", true);
+            engine.Test("Contains('1;2', 2)", true);
+            engine.Test("Contains('2', 2)", true);
+            engine.Test("Contains(Array(Number, Double, '5.4'), 5.5)", true);
         }
 
         [Test]
@@ -95,6 +103,10 @@ namespace Zirpl.CalcEngine.Tests
 
             engine.Test("15*ChildrenDct(\"Test Child 2\").Age+14", (15 * p.ChildrenDct["Test Child 2"].Age + 14).Value);
             engine.Test("ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
+            
+            engine.Test("Specs('Level') == '6;7' && Specs('Group') == 'M_SUPP'", true);
+            engine.Test("Contains(ArrayString(Specs('Level'), ';'), Item.Level) && Specs('Group').Value == 'M_SUPP'", true);
+            
             var ex = Assert.Throws<CalcEngineBindingException>(() =>
             {
                 var d = engine.Evaluate<double>("ChildrenAgeDct('Test Child 10') * 2");
@@ -152,8 +164,11 @@ namespace Zirpl.CalcEngine.Tests
             var cultureInfo = engine.CultureInfo;
             engine.CultureInfo = CultureInfo.InvariantCulture;
 
+            engine.Test("1492.5373134328358", 1492.5373134328358);
+            engine.Test("1 041.341 ", 1041.341);
+            
             // test invalid parsing
-            var ex = Assert.Throws<Exception>(() =>
+            var ex = Assert.Throws<CalcEngineException>(() =>
             {
                 var d = engine.Evaluate<string>("Max(1,2,3)KalleKusta");
             });
@@ -164,6 +179,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("0", 0.0);
             engine.Test("+1", 1.0);
             engine.Test("-1", -1.0);
+            
             engine.Test("1+1", 1 + 1.0);
             engine.Test("1*2*3*4*5*6*7*8*9", 1 * 2 * 3 * 4 * 5 * 6 * 7 * 8 * 9.0);
             engine.Test("1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1))))))))))", 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1.0)))))))))));
@@ -264,6 +280,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("SIN(PI()/4)", Math.Sin(Math.PI / 4));
             engine.Test("ASIN(PI()/4)", Math.Asin(Math.PI / 4));
             engine.Test("SINH(PI()/4)", Math.Sinh(Math.PI / 4));
+            engine.Test("COS(90)", Math.Cos(90));
             engine.Test("COS(PI()/4)", Math.Cos(Math.PI / 4));
             engine.Test("ACOS(PI()/4)", Math.Acos(Math.PI / 4));
             engine.Test("COSH(PI()/4)", Math.Cosh(Math.PI / 4));
@@ -276,6 +293,7 @@ namespace Zirpl.CalcEngine.Tests
             // TEXT FUNCTION TESTS
             engine.Test("CHAR(65)", "A");
             //engine.Test("CODE(\"A\")", 65);
+            engine.Test("CONCATENATE(\"(a\", \"b)\")", "(ab)");
             engine.Test("CONCATENATE(\"a\", \"b\")", "ab");
             engine.Test("CONCATENATE('a', 'b')", "ab");
             engine.Test("FIND(\"bra\", \"abracadabra\")", 2);
