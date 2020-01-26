@@ -58,6 +58,9 @@ namespace Zirpl.CalcEngine
                 var input = parms[0].Evaluate();
                 var enumerable = input as IEnumerable ?? new Object[]{};
                 var target = parms[1].Evaluate() ?? "";
+
+                var targets = target as IEnumerable ?? new Object[] {target};
+                
                 if (input is string s)
                 {
                     char separator = ';';
@@ -67,10 +70,26 @@ namespace Zirpl.CalcEngine
                     }
 
                     enumerable = s.Split(separator);
-                    target = target.ToString();
+                    foreach (var o in targets)
+                    {
+                        if (enumerable.Cast<object>().Contains(o.ToString()))
+                        {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
                 }
                 
-                return enumerable.Cast<object>().Contains(target);
+                foreach (var o in targets)
+                {
+                    if (enumerable.Cast<object>().Contains(o))
+                    {
+                        return true;
+                    }
+                }
+                
+                return false;
             });
             
 

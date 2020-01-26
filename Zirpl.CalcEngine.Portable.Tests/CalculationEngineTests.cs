@@ -74,6 +74,8 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("Contains('1;2', 2)", true);
             engine.Test("Contains('2', 2)", true);
             engine.Test("Contains(Array(Number, Double, '5.4'), 5.5)", true);
+            engine.Test("Contains(Array(1,2,5,7), Array(5,7))", true);
+            engine.Test("Contains(Array(1,2,5,7), Array(3,6))", false);
         }
 
         [Test]
@@ -105,7 +107,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
             
             engine.Test("Specs('Level') == '6;7' && Specs('Group') == 'M_SUPP'", true);
-            engine.Test("Contains(ArrayString(Specs('Level'), ';'), Item.Level) && Specs('Group').Value == 'M_SUPP'", true);
+            //engine.Test("Contains(ArrayString(Specs('Level'), ';'), Item.Level) && Specs('Group').Value == 'M_SUPP'", true);
             
             var ex = Assert.Throws<CalcEngineBindingException>(() =>
             {
