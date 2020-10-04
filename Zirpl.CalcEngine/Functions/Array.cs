@@ -38,7 +38,7 @@ namespace Zirpl.CalcEngine
 
                 return objects.ToArray();
             });
-            
+
             ce.RegisterFunction("ArrayString", 1, int.MaxValue, parms =>
             {
                 var objects = new List<object>();
@@ -52,15 +52,13 @@ namespace Zirpl.CalcEngine
 
                 return objects.ToArray();
             });
-            
             ce.RegisterFunction("CONTAINS", 2, 3, parms =>
             {
                 var input = parms[0].Evaluate();
-                var enumerable = input as IEnumerable ?? new Object[]{};
+                var includes = input as IList ?? new[] {input};
                 var target = parms[1].Evaluate() ?? "";
+                var excludes = new List<string>();
 
-                var targets = target as IEnumerable ?? new Object[] {target};
-                
                 if (input is string s)
                 {
                     char separator = ';';
@@ -69,29 +67,34 @@ namespace Zirpl.CalcEngine
                         separator = (parms[3].Evaluate() as string ?? ";")[0];
                     }
 
-                    enumerable = s.Split(separator);
-                    foreach (var o in targets)
-                    {
-                        if (enumerable.Cast<object>().Contains(o.ToString()))
-                        {
-                            return true;
-                        }
-                    }
-                    
-                    return false;
+                    includes = s.Split(separator);
+
+                    excludes = includes.Cast<object>().Where(o => ((string) o).StartsWith("!")).Select(o => o.ToString().TrimStart('!')).ToList();
+                    includes = includes.Cast<object>().Where(o => !((string) o).StartsWith("!")).ToList();
                 }
-                
+
+                var targets = target as IEnumerable ?? new Object[] {target};
+                if (target is string t)
+                {
+                    targets = new[] {t};
+                }
+
+                var result = false;
                 foreach (var o in targets)
                 {
-                    if (enumerable.Cast<object>().Contains(o))
+                    if (includes.Cast<object>().Any(o1 => string.Equals(o1?.ToString(), o?.ToString(), StringComparison.InvariantCultureIgnoreCase)))
                     {
-                        return true;
+                        result = true;
+                    }
+                    if (excludes.Any(o1 => string.Equals(o1?.ToString(), o?.ToString(), StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        result = false;
+                        break;
                     }
                 }
-                
-                return false;
+
+                return result;
             });
-            
 
             ce.RegisterFunction("Map", 0, int.MaxValue, parms =>
             {

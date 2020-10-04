@@ -69,6 +69,7 @@ namespace Zirpl.CalcEngine.Tests
             var p = new TestPerson();
             p.Name = "Test Person";
 			p.Code = "Code";
+			p.Nullable = null;
 			p.Id = Guid.Parse("96C5888C-6C75-43DD-A372-2A3398DAE038");
 			p.Birth = DateTime.Today.AddYears(-30);
 	        p.Number = 55;
@@ -85,6 +86,8 @@ namespace Zirpl.CalcEngine.Tests
 			}
 			return p;
         }
+
+	    public decimal? Nullable { get; set; }
 
 	    public int Number { get; set; }
 

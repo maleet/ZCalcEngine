@@ -67,15 +67,20 @@ namespace Zirpl.CalcEngine.Tests
             Assert.That(new double[] {1, 2, 3}, Is.EquivalentTo(engine.Evaluate("ge(Range(0, 3), 1)") as IEnumerable));
             Assert.That(new double[] {4.5, 5.5}, Is.EquivalentTo(engine.Evaluate("ge(Array(Decimal, Double), 1)") as IEnumerable));
             Assert.That(new String[] {"6", "7"}, Is.EquivalentTo(engine.Evaluate("ArrayString('6;7')") as IEnumerable));
+
             engine.Test("Contains(Array(1,2), 2)", true);
             engine.Test("Contains(Array(1,2), 3)", false);
-            engine.Test("Contains(Array('1','2'), 2)", false);
+            engine.Test("Contains(Array('1','2'), 2)", true);
             engine.Test("Contains('1;2', '2')", true);
             engine.Test("Contains('1;2', 2)", true);
             engine.Test("Contains('2', 2)", true);
+            engine.Test("Contains(2, '2')", true);
             engine.Test("Contains(Array(Number, Double, '5.4'), 5.5)", true);
             engine.Test("Contains(Array(1,2,5,7), Array(5,7))", true);
             engine.Test("Contains(Array(1,2,5,7), Array(3,6))", false);
+            engine.Test("Contains('n;m;s;!k', Array('s','u'))", true);
+            engine.Test("Contains('n;m;s;!k', Array('s','u','k'))", false);
+            engine.Test("Contains('n;m;s;!k', Array('s','u','k'))", false);
         }
 
         [Test]
@@ -105,8 +110,11 @@ namespace Zirpl.CalcEngine.Tests
 
             engine.Test("15*ChildrenDct(\"Test Child 2\").Age+14", (15 * p.ChildrenDct["Test Child 2"].Age + 14).Value);
             engine.Test("ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
-            
-            engine.Test("Specs('Level') == '6;7' && Specs('Group') == 'M_SUPP'", true);
+            engine.Test("ValueOr(ChildrenDct('Test Child 2').Nullable, 0) <> 0", false);
+            engine.Test("ValueOr(ChildrenDct('Test Child 2').Nullable, 0) < 6", false);
+            engine.Test("ValueOr(ChildrenDct('Test Child 2').Number, 0) <> 0", true);
+            engine.Test("ValueOr(ChildrenDct('NotExist').Number, 3) == 3", true);
+
             //engine.Test("Contains(ArrayString(Specs('Level'), ';'), Item.Level) && Specs('Group').Value == 'M_SUPP'", true);
             
             var ex = Assert.Throws<CalcEngineBindingException>(() =>
@@ -206,6 +214,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("'2'='2'", true);
             engine.Test("5==5", true);
             engine.Test("6==5", false);
+            engine.Test("6<>5", true);
             engine.Test("6=5", false);
             engine.Test("6<5", false);
             engine.Test("6>5", true);

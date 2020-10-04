@@ -42,6 +42,7 @@ namespace Zirpl.CalcEngine
             ce.RegisterFunction("PADLEFT", 2, 3, PadLeft);
             ce.RegisterFunction("PADRIGHT", 2, 3, PadRight);
             ce.RegisterFunction("AFFIXIF", 1, 3, AffixIf);
+            ce.RegisterFunction("GUID", 1, 1, Guid);
         }
 
         static object _Char(List<Expression> p)
@@ -283,6 +284,12 @@ namespace Zirpl.CalcEngine
             }
 
             return s;
+        }
+        
+        private static object Guid(List<Expression> parms)
+        {
+            var s = parms[0].Evaluate().ToString();
+            return new Guid(s);
         }
     }
 }

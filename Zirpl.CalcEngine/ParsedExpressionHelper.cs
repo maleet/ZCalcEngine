@@ -53,7 +53,7 @@ namespace Zirpl.CalcEngine
             if (functionExpressionParm is BindingExpression bindingExpression)
             {
                 var bindingPath = bindingExpression._expression;
-                var bindingExpressionValue = GetString(bindingExpression.Value);
+                var bindingExpressionValue = GetString(bindingExpression.Value).Replace("System.Object", "?");
                 expressionString = expressionString.Replace(bindingPath, bindingExpressionValue);
             }
             return expressionString;
@@ -61,7 +61,7 @@ namespace Zirpl.CalcEngine
 
         private static string GetString(object o)
         {
-            if(o is IEnumerable enumerable)
+            if(!(o is string) && o is IEnumerable enumerable)
             {
                 List<string> list = new List<string>();
                 foreach(var item in enumerable)

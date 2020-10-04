@@ -917,7 +917,7 @@ namespace Zirpl.CalcEngine
                 var rest = string.Join("", _expr.Skip(1).ToArray());
                 if (string.IsNullOrWhiteSpace(tokenValue))
                 {
-                    tokenValue = _expr.First().ToString();
+                    tokenValue = _expr.FirstOrDefault().ToString();
                 }
 
                 return $"[{tokenValue}]{rest}";
