@@ -78,7 +78,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("Contains(Array(Number, Double, '5.4'), 5.5)", true);
             engine.Test("Contains(Array(1,2,5,7), Array(5,7))", true);
             engine.Test("Contains(Array(1,2,5,7), Array(3,6))", false);
-            engine.Test("Contains('n;m;s;!k', Array('s','u'))", true);
+            engine.Test("Contains('n;m; s;!k', Array('s','u'))", true);
             engine.Test("Contains('n;m;s;!k', Array('s','u','k'))", false);
             engine.Test("Contains('n;m;s;!k', Array('s','u','k'))", false);
         }
@@ -320,6 +320,8 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("RIGHT(\"abracadabra\", 3)", "bra");
             engine.Test("SEARCH(\"bra\", \"abracadabra\")", 2);
             engine.Test("SEARCH(\"BRA\", \"abracadabra\")", 2);
+            engine.Test("(SEARCH('432', '30X432')>0) || (Search('4DX', '4DX30P')>0)", true);
+            
             engine.Test("SUBSTITUTE(\"abracadabra\", \"a\", \"b\")", "bbrbcbdbbrb");
             engine.Test("T(123)", "123");
             engine.Test("TEXT(1234, \"n2\")", "1,234.00");

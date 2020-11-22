@@ -7,19 +7,26 @@ namespace Zirpl.CalcEngine
     {
         internal static string ParseBindings(Expression expression, string expressionString)
         {
-            if (expression is FunctionExpression functionExpression)
-            {
-                foreach (var functionExpressionParm in functionExpression.Parms)
-                {
-                    expressionString = ParseAsBinding(expressionString, functionExpressionParm);
-                    expressionString = ParseAsVariable(expressionString, functionExpressionParm);
-                }
-            }
-            
+            expressionString = ParseAsFunction(expressionString, expression);
             expressionString = ParseAsBinding(expressionString, expression);
             expressionString = ParseAsVariable(expressionString, expression);
             expressionString = ParseAsBinary(expressionString, expression);
             
+            return expressionString;
+        }
+
+        private static string ParseAsFunction(string expressionString, Expression expression)
+        {
+            if (expression is FunctionExpression functionExpression)
+            {
+                foreach (var functionExpressionParm in functionExpression.Parms)
+                {
+                    expressionString = ParseAsFunction(expressionString, functionExpressionParm);
+                    expressionString = ParseAsBinding(expressionString, functionExpressionParm);
+                    expressionString = ParseAsVariable(expressionString, functionExpressionParm);
+                }
+            }
+
             return expressionString;
         }
 
@@ -33,6 +40,8 @@ namespace Zirpl.CalcEngine
                 expressionString = ParseAsVariable(expressionString, binaryExpression._rgt);
                 expressionString = ParseAsBinary(expressionString, binaryExpression._lft);
                 expressionString = ParseAsBinary(expressionString, binaryExpression._rgt);
+                expressionString = ParseAsFunction(expressionString, binaryExpression._lft);
+                expressionString = ParseAsFunction(expressionString, binaryExpression._rgt);
             }
 
             return expressionString;

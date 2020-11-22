@@ -68,9 +68,9 @@ namespace Zirpl.CalcEngine
                     }
 
                     includes = s.Split(separator);
-
-                    excludes = includes.Cast<object>().Where(o => ((string) o).StartsWith("!")).Select(o => o.ToString().TrimStart('!')).ToList();
-                    includes = includes.Cast<object>().Where(o => !((string) o).StartsWith("!")).ToList();
+                    
+                    excludes = includes.Cast<object>().Where(o => ((string) o).Trim().StartsWith("!")).Select(o => o.ToString().Trim().TrimStart('!')).ToList();
+                    includes = includes.Cast<object>().Where(o => !((string) o).Trim().StartsWith("!")).Select(o => o.ToString().Trim()).ToList();
                 }
 
                 var targets = target as IEnumerable ?? new Object[] {target};
