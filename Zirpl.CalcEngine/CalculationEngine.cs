@@ -141,6 +141,7 @@ namespace Zirpl.CalcEngine
             var o = x.Evaluate();
             if (logBindingExpressionValues)
             {
+                ContextBindings = ParsedExpressionHelper.GetBindingValues(x);
                 ParsedExpression = ParsedExpressionHelper.ParseBindings(x, expression);
             }
 
@@ -363,10 +364,14 @@ namespace Zirpl.CalcEngine
             }
         }
 
+        public CalculationOptions Options { get; set; } = new CalculationOptions();
+
         public bool InValidation { get; set; }
         public bool ThrowOnInvalidBindingExpression { get; set; } = true;
         public bool LogBindingExpressionValues { get; set; } = true;
         public string ParsedExpression { get; private set; }
+
+        public Dictionary<string, object> ContextBindings { get; set; }
 
         #endregion
 
@@ -1061,5 +1066,15 @@ namespace Zirpl.CalcEngine
         }
 
         #endregion
+    }
+
+    public class CalculationOptions
+    {
+        public FunctionOptions Functions { get; set; } = new FunctionOptions();
+
+        public class FunctionOptions
+        {
+            public List<char> ContainsTrimStartChars { get; set; } = new List<char>(); 
+        }
     }
 }

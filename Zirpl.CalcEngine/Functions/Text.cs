@@ -35,7 +35,7 @@ namespace Zirpl.CalcEngine
             ce.RegisterFunction("SUBSTITUTE", 3, 4, Substitute); // Substitutes new text for old text in a text string
             ce.RegisterFunction("T", 1, T); // Converts its arguments to text
             ce.RegisterFunction("TEXT", 2, _Text); // Formats a number and converts it to text
-            ce.RegisterFunction("TRIM", 1, Trim); // Removes spaces from text
+            ce.RegisterFunction("TRIM", 1, 3, Trim); // Removes spaces from text
             ce.RegisterFunction("UPPER", 1, Upper); // Converts text to uppercase
             ce.RegisterFunction("VALUE", 1, Value); // Converts a text argument to a number
             ce.RegisterFunction("HASH", 1, 1, Hash);
@@ -201,7 +201,40 @@ namespace Zirpl.CalcEngine
 
         static object Trim(List<Expression> p)
         {
-            return ((string)p[0]).Trim();
+            char[] chars = null;
+            bool? trimStart = null;
+            if (p.Count > 1)
+            {
+                chars = p[1].Evaluate().ToString().ToCharArray();
+            }
+            
+            if (p.Count > 2)
+            {
+                trimStart = (bool) p[2].Evaluate();
+            }
+
+            var s = ((string)p[0]);
+            if (chars != null)
+            {
+                switch (trimStart)
+                {
+                    case true:
+                        return s.TrimStart(chars);
+                    case false:
+                        return s.TrimEnd(chars);
+                    default:
+                        return s.Trim(chars);
+                }
+            }
+            switch (trimStart)
+            {
+                case true:
+                    return s.TrimStart();
+                case false:
+                    return s.TrimEnd();
+                default:
+                    return s.Trim();
+            }
         }
 
         static object Upper(List<Expression> p)

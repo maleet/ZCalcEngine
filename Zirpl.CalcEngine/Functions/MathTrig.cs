@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -80,98 +81,122 @@ namespace Zirpl.CalcEngine
             ce.RegisterFunction("GT", 2, GreaterThan);
             ce.RegisterFunction("GREATEROREQUAL", 2, GreaterOrEqual);
             ce.RegisterFunction("GE", 2, GreaterOrEqual);
+            ce.RegisterFunction("NUMBER", 1, EnsureNumber);
         }
 
         static object Abs(List<Expression> p)
         {
             return Math.Abs((double)p[0]);
         }
+
         static object Acos(List<Expression> p)
         {
             return Math.Acos((double)p[0]);
         }
+
         static object Asin(List<Expression> p)
         {
             return Math.Asin((double)p[0]);
         }
+
         static object Atan(List<Expression> p)
         {
             return Math.Atan((double)p[0]);
         }
+
         static object Atan2(List<Expression> p)
         {
             return Math.Atan2((double)p[0], (double)p[1]);
         }
+
         static object Ceiling(List<Expression> p)
         {
             return Math.Ceiling((double)p[0]);
         }
+
         static object Cos(List<Expression> p)
         {
             return Math.Cos((double)p[0]);
         }
+
         static object Cosh(List<Expression> p)
         {
             return Math.Cosh((double)p[0]);
         }
+
         static object Exp(List<Expression> p)
         {
             return Math.Exp((double)p[0]);
         }
+
         static object Floor(List<Expression> p)
         {
             return Math.Floor((double)p[0]);
         }
+
         static object Int(List<Expression> p)
         {
             return (int)((double)p[0]);
         }
+
         static object Ln(List<Expression> p)
         {
             return Math.Log((double)p[0]);
         }
+
         static object Log(List<Expression> p)
         {
             var lbase = p.Count > 1 ? (double)p[1] : 10;
             return Math.Log((double)p[0], lbase);
         }
+
         static object Log10(List<Expression> p)
         {
             return Math.Log10((double)p[0]);
         }
+
         static object Pi(List<Expression> p)
         {
             return Math.PI;
         }
+
         static object Power(List<Expression> p)
         {
             return Math.Pow((double)p[0], (double)p[1]);
         }
+
         static Random _rnd = new Random();
+
         static object Rand(List<Expression> p)
         {
             return _rnd.NextDouble();
         }
+
         static object RandBetween(List<Expression> p)
         {
             return _rnd.Next((int)(double)p[0], (int)(double)p[1]);
         }
+
         static object Sign(List<Expression> p)
         {
             return Math.Sign((double)p[0]);
         }
+
         static object Sin(List<Expression> p)
         {
             return Math.Sin((double)p[0]);
         }
+
         static object Sinh(List<Expression> p)
         {
             return Math.Sinh((double)p[0]);
         }
+
         static object Sqrt(List<Expression> p)
         {
             return Math.Sqrt((double)p[0]);
         }
+
         static object Sum(List<Expression> p)
         {
             var tally = new Tally();
@@ -181,19 +206,22 @@ namespace Zirpl.CalcEngine
             }
             return tally.Sum();
         }
+
         static object Tan(List<Expression> p)
         {
             return Math.Tan((double)p[0]);
         }
+
         static object Tanh(List<Expression> p)
         {
             return Math.Tanh((double)p[0]);
         }
+
         static object Trunc(List<Expression> p)
         {
             return (double)(int)((double)p[0]);
         }
-        
+
         static object LessThan(List<Expression> parms)
         {
             var numbers = GetNumbersAndThan(parms, out var max);
@@ -217,7 +245,7 @@ namespace Zirpl.CalcEngine
             var numbers = GetNumbersAndThan(parms, out var max);
             return numbers.Where(arg => arg >= max).ToList();
         }
-        
+
         private static List<double> GetNumbersAndThan(List<Expression> parms, out double max)
         {
             
@@ -254,6 +282,18 @@ namespace Zirpl.CalcEngine
             }
 
             return 0;
+        }
+
+        private static object EnsureNumber(List<Expression> parms)
+        {
+            var o = parms[0].Evaluate();
+            var asString = EnsureInvariantNumber(o.ToString());
+            return Decimal.TryParse(asString, NumberStyles.Any, CultureInfo.InvariantCulture, out var result) ? result : 0;
+        }
+        
+        private static string EnsureInvariantNumber(string str)
+        {
+            return str?.Replace(",", ".");
         }
     }
 }

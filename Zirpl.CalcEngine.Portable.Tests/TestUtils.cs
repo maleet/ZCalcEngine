@@ -17,14 +17,14 @@ namespace Zirpl.CalcEngine.Tests
                     throw new Exception(msg);
                 }
             }
-            
+
             if (!Equals(result, expectedResult))
             {
                 var msg = $"error: {expression} gives {result}, should give {expectedResult}";
                 throw new Exception(msg);
             }
 
-            Console.WriteLine(engine.ParsedExpression);
+            Console.WriteLine(expression + " -> " + engine.ParsedExpression);
         }
 
         private static bool IsArray(object value)

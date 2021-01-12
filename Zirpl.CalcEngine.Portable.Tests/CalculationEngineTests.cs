@@ -24,24 +24,24 @@ namespace Zirpl.CalcEngine.Tests
             engine.Variables.Add("A", array);
             engine.Variables.Add("B", strings);
             engine.Variables.Add("Decimal", 4.5M);
-            engine.Variables.Add("Number", 55);
+            engine.Variables.Add("Number1", 55);
             engine.Variables.Add("Double", 5.5);
             engine.Variables.Add("D310", 310M);
             engine.Variables.Add("D32", 32M);
-            engine.Variables.Add("h", 1/60);
-            engine.Variables.Add("m", 1/60/60);
-            engine.Test("105m/(4*2380)", 105*(1/60/60)/(4*2380));
-            engine.Test("5h", 5*1/60);
+            engine.Variables.Add("h", 1D / 60);
+            engine.Variables.Add("m", 1D / 60 / 60);
+            engine.Test("105m/(4*2380)", 105 * (1D / 60 / 60) / (4 * 2380));
+            engine.Test("5h", 5 * 1D / 60);
 
             engine.Test("D310>=250 && D32<=315", true);
-            
+
             engine.Test("A", array);
             engine.Test("B", strings);
             engine.Test("Max(Array(5,6,7))", 7);
-            engine.Test("Number", 55);
-            engine.Test("Max(Number, 5,33)", 55);
-            engine.Test("Max(Number, 5.33)", 55);
-            engine.Test("Min(Number, 5,88, Decimal)", 4.5M, "Min(55, 5,88, 4,5)");
+            engine.Test("Number1", 55);
+            engine.Test("Max(Number1, 5,33)", 55);
+            engine.Test("Max(Number1, 5.33)", 55);
+            engine.Test("Min(Number1, 5,88, Decimal)", 4.5M, "Min(55, 5,88, 4,5)");
 
             Assert.That(new double[] {0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("Range(0, 3)") as IEnumerable));
             Assert.That(new double[] {0, 100, 200}, Is.EquivalentTo(engine.Evaluate("Range(0, 200, 100)") as IEnumerable));
@@ -75,12 +75,23 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("Contains('1;2', 2)", true);
             engine.Test("Contains('2', 2)", true);
             engine.Test("Contains(2, '2')", true);
-            engine.Test("Contains(Array(Number, Double, '5.4'), 5.5)", true);
+            engine.Test("Contains(Array(Number1, Double, '5.4'), 5.5)", true);
             engine.Test("Contains(Array(1,2,5,7), Array(5,7))", true);
             engine.Test("Contains(Array(1,2,5,7), Array(3,6))", false);
             engine.Test("Contains('n;m; s;!k', Array('s','u'))", true);
+            engine.Test("Contains('n|m|s|!k', Array('s','u'), '|')", true);
             engine.Test("Contains('n;m;s;!k', Array('s','u','k'))", false);
             engine.Test("Contains('n;m;s;!k', Array('s','u','k'))", false);
+
+            engine.Options.Functions.ContainsTrimStartChars = new List<char>() {'0'};
+            engine.Test("Contains('04;09;7;92;!08', '0092')", true);
+            engine.Options.Functions.ContainsTrimStartChars = new List<char>();
+            engine.Test("Contains('04;09;7;92;!08', '0092')", false);
+            engine.Test("Contains('04;09;7;0092;!08', '92')", false);
+            
+            engine.Test("XLOOKUP('06', Array('06', '05', '04'), Array('25', '26', '27'), '20')", "25");
+            engine.Test("XLOOKUP('04', Array('06', '05', '04'), Array('25', '26', '27'), '20')", "27");
+            engine.Test("XLOOKUP('07', Array('06', '05', '04'), Array('25', '26', '27'), '20')", "20");
         }
 
         [Test]
@@ -97,8 +108,10 @@ namespace Zirpl.CalcEngine.Tests
             engine.DataContext = p;
 
             engine.Test("Name", "Test Person");
-            engine.Test("1h", 1/60);
+            engine.Test("1h", 1D / 60);
 
+            engine.Test("1mp*ChildrenDct('Test Child 2').Age", p.ChildrenDct["Test Child 2"].Age.Value);
+            
             engine.Test("HASH(Name)", "53A4E9EC08910DE9BB6EDAA99F8C867C");
             engine.Test("HASH('Name')", "49EE3087348E8D44E1FEDA1917443987");
             engine.Functions.Remove("CODE");
@@ -111,12 +124,18 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("15*ChildrenDct(\"Test Child 2\").Age+14", (15 * p.ChildrenDct["Test Child 2"].Age + 14).Value);
             engine.Test("ChildrenDct('Test Child 2').Name", p.ChildrenDct["Test Child 2"].Name);
             engine.Test("ValueOr(ChildrenDct('Test Child 2').Nullable, 0) <> 0", false);
-            engine.Test("ValueOr(ChildrenDct('Test Child 2').Nullable, 0) < 6", false);
+            engine.Test("ValueOr(ChildrenDct('Test Child 2').Nullable, 0) < 6", true);
             engine.Test("ValueOr(ChildrenDct('Test Child 2').Number, 0) <> 0", true);
+            engine.ThrowOnInvalidBindingExpression = false;
             engine.Test("ValueOr(ChildrenDct('NotExist').Number, 3) == 3", true);
-
-            //engine.Test("Contains(ArrayString(Specs('Level'), ';'), Item.Level) && Specs('Group').Value == 'M_SUPP'", true);
+            engine.ThrowOnInvalidBindingExpression = true;
+            Assert.Throws<CalcEngineBindingException>(() =>
+            {
+                engine.Test("ChildrenDct('NotExist').Number", true);
+            });
             
+            //engine.Test("Contains(ArrayString(Specs('Level'), ';'), Item.Level) && Specs('Group').Value == 'M_SUPP'", true);
+
             var ex = Assert.Throws<CalcEngineBindingException>(() =>
             {
                 var d = engine.Evaluate<double>("ChildrenAgeDct('Test Child 10') * 2");
@@ -138,10 +157,10 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("GetParent()", p.Name);
 
             engine.InValidation = true;
-            Assert.That(new double[] {}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenAgeDct('Test Child 2'))") as IEnumerable));
-            Assert.That(new double[] {}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenWeightDct('Test Child 2'))") as IEnumerable));
-            Assert.That(new double[] {}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenSalaryDct('Test Child 2'))") as IEnumerable));
-            
+            Assert.That(new double[] { }, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenAgeDct('Test Child 2'))") as IEnumerable));
+            Assert.That(new double[] { }, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenWeightDct('Test Child 2'))") as IEnumerable));
+            Assert.That(new double[] { }, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenSalaryDct('Test Child 2'))") as IEnumerable));
+
             engine.InValidation = false;
             Assert.That(new double[] {0, 1}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenAgeDct('Test Child 2'))") as IEnumerable));
             Assert.That(new double[] {0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("LessThan(Range(0, 3), ChildrenWeightDct('Test Child 2'))") as IEnumerable));
@@ -158,7 +177,7 @@ namespace Zirpl.CalcEngine.Tests
                 var personCalculationEngine = calculationEngine as TestPersonCalculationEngine;
                 return personCalculationEngine.DataContext.Name;
             });
-            
+
             var p = TestPerson.CreateTestPerson();
             p.Parent = TestPerson.CreateTestPerson();
             testPersonCalculationEngine.DataContext = p;
@@ -176,7 +195,7 @@ namespace Zirpl.CalcEngine.Tests
 
             engine.Test("1492.5373134328358", 1492.5373134328358);
             engine.Test("1 041.341 ", 1041.341);
-            
+
             // test invalid parsing
             var ex = Assert.Throws<CalcEngineException>(() =>
             {
@@ -184,12 +203,12 @@ namespace Zirpl.CalcEngine.Tests
             });
 
             Assert.That(ex.Message, Is.EqualTo("Syntax error. Expression: Max(1,2,3)[KalleKusta]"));
-            
+
             // test internal operators
             engine.Test("0", 0.0);
             engine.Test("+1", 1.0);
             engine.Test("-1", -1.0);
-            
+
             engine.Test("1+1", 1 + 1.0);
             engine.Test("1*2*3*4*5*6*7*8*9", 1 * 2 * 3 * 4 * 5 * 6 * 7 * 8 * 9.0);
             engine.Test("1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1/(1+1))))))))))", 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1 / (1 + 1.0)))))))))));
@@ -299,7 +318,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("ATAN(PI()/4)", Math.Atan(Math.PI / 4));
             engine.Test("ATAN2(1,2)", Math.Atan2(1, 2));
             engine.Test("TANH(PI()/4)", Math.Tanh(Math.PI / 4));
-
+            engine.Test("Number('0.54')*2", 0.54*2);
 
             // TEXT FUNCTION TESTS
             engine.Test("CHAR(65)", "A");
@@ -321,11 +340,14 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("SEARCH(\"bra\", \"abracadabra\")", 2);
             engine.Test("SEARCH(\"BRA\", \"abracadabra\")", 2);
             engine.Test("(SEARCH('432', '30X432')>0) || (Search('4DX', '4DX30P')>0)", true);
-            
+
             engine.Test("SUBSTITUTE(\"abracadabra\", \"a\", \"b\")", "bbrbcbdbbrb");
             engine.Test("T(123)", "123");
             engine.Test("TEXT(1234, \"n2\")", "1,234.00");
             engine.Test("TRIM(\"   hello   \")", "hello");
+            engine.Test("TRIM('00hello00', '00', true)", "hello00");
+            engine.Test("TRIM('00hello00', '00', false)", "00hello");
+            engine.Test("TRIM('00hello00', '00')", "hello");
             engine.Test("UPPER(\"abracadabra\")", "ABRACADABRA");
             engine.Test("VALUE(\"1234\")", 1234.0);
             engine.Test("PadLeft(1254, 6, \"0\")", "001254");

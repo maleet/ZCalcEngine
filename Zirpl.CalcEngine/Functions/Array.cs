@@ -54,6 +54,7 @@ namespace Zirpl.CalcEngine
             });
             ce.RegisterFunction("CONTAINS", 2, 3, parms =>
             {
+                var containsTrimStartChars = ce.Options.Functions.ContainsTrimStartChars.ToArray();
                 var input = parms[0].Evaluate();
                 var includes = input as IList ?? new[] {input};
                 var target = parms[1].Evaluate() ?? "";
@@ -64,11 +65,11 @@ namespace Zirpl.CalcEngine
                     char separator = ';';
                     if (parms.Count == 3)
                     {
-                        separator = (parms[3].Evaluate() as string ?? ";")[0];
+                        separator = (parms[2].Evaluate() as string ?? ";")[0];
                     }
 
                     includes = s.Split(separator);
-                    
+
                     excludes = includes.Cast<object>().Where(o => ((string) o).Trim().StartsWith("!")).Select(o => o.ToString().Trim().TrimStart('!')).ToList();
                     includes = includes.Cast<object>().Where(o => !((string) o).Trim().StartsWith("!")).Select(o => o.ToString().Trim()).ToList();
                 }
@@ -82,11 +83,11 @@ namespace Zirpl.CalcEngine
                 var result = false;
                 foreach (var o in targets)
                 {
-                    if (includes.Cast<object>().Any(o1 => string.Equals(o1?.ToString(), o?.ToString(), StringComparison.InvariantCultureIgnoreCase)))
+                    if (includes.Cast<object>().Any(o1 => string.Equals(o1?.ToString().TrimStart(containsTrimStartChars), o?.ToString().TrimStart(containsTrimStartChars), StringComparison.InvariantCultureIgnoreCase)))
                     {
                         result = true;
                     }
-                    if (excludes.Any(o1 => string.Equals(o1?.ToString(), o?.ToString(), StringComparison.InvariantCultureIgnoreCase)))
+                    if (excludes.Any(o1 => string.Equals(o1?.ToString().TrimStart(containsTrimStartChars), o?.ToString(), StringComparison.InvariantCultureIgnoreCase)))
                     {
                         result = false;
                         break;
@@ -112,6 +113,21 @@ namespace Zirpl.CalcEngine
                 }
 
                 return objects.ToArray();
+            });
+            ce.RegisterFunction("XLookup", 3, 4, parms =>
+            {
+                var search = parms[0].Evaluate();
+                var keys = ((IEnumerable) parms[1].Evaluate()).Cast<object>().ToList();
+                var values = ((IEnumerable) parms[2].Evaluate()).Cast<object>().ToList();
+                var defaultValue = parms[3].Evaluate();
+
+                var ix = keys.FindIndex(o => Equals(o, search));
+                if (ix >= 0)
+                {
+                    return values[ix];
+                }
+
+                return defaultValue;
             });
         }
     }
