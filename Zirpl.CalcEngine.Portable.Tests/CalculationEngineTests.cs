@@ -91,7 +91,13 @@ namespace Zirpl.CalcEngine.Tests
             
             engine.Test("XLOOKUP('06', Array('06', '05', '04'), Array('25', '26', '27'), '20')", "25");
             engine.Test("XLOOKUP('04', Array('06', '05', '04'), Array('25', '26', '27'), '20')", "27");
+            engine.Test("XLOOKUP('04', Array('06', '05', '04'), Array(25, 26, 27), '20')", 27);
             engine.Test("XLOOKUP('07', Array('06', '05', '04'), Array('25', '26', '27'), '20')", "20");
+            
+            engine.Variables.Add("dec1", 4.5M);
+            engine.Variables.Add("doub1", 4.5);
+            engine.Test("XLOOKUP(dec1, Array(doub1, 5, 6), Array(7, 8, 9), 0)", 7);
+            
         }
 
         [Test]
@@ -215,6 +221,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("((1+2)*(2+3)/(4+5))^0.123", Math.Pow((1 + 2) * (2 + 3) / (4 + 5.0), 0.123));
             engine.Test("10%", 0.1);
             engine.Test("1e+3", 1000.0);
+            engine.Test("'0020'+1", 21);
 
             // test simple variables
             engine.Variables.Add("one", 1);

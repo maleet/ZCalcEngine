@@ -121,7 +121,20 @@ namespace Zirpl.CalcEngine
                 var values = ((IEnumerable) parms[2].Evaluate()).Cast<object>().ToList();
                 var defaultValue = parms[3].Evaluate();
 
-                var ix = keys.FindIndex(o => Equals(o, search));
+                var isNumber = search.IsNumber();
+                if (isNumber)
+                {
+                    search = search.TryConvertToDouble();
+                }
+                
+                var ix = keys.FindIndex(o =>
+                {
+                    if (isNumber)
+                    {
+                        return Equals(o?.TryConvertToDouble(), search);
+                    }
+                    return Equals(o, search);
+                });
                 if (ix >= 0)
                 {
                     return values[ix];

@@ -258,7 +258,7 @@ namespace Zirpl.CalcEngine
                     try
                     {
                         
-                        numbers.Add(TryConvert(v));
+                        numbers.Add(ExpressionHelper.TryConvertToDouble(v));
                     }
                     catch (InvalidCastException e)
                     {
@@ -267,22 +267,10 @@ namespace Zirpl.CalcEngine
             }
 
             var o = parms[1].Evaluate();
-            max = TryConvert(o);
+            max = ExpressionHelper.TryConvertToDouble(o);
             return numbers;
         }
 
-        private static double TryConvert(object o)
-        {
-            try
-            {
-                return Convert.ToDouble(o);
-            }
-            catch (InvalidCastException e)
-            {
-            }
-
-            return 0;
-        }
 
         private static object EnsureNumber(List<Expression> parms)
         {

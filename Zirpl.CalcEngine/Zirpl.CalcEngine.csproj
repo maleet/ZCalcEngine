@@ -64,7 +64,7 @@
     <Compile Include="Functions\Statistical.cs" />
     <Compile Include="Functions\Tally.cs" />
     <Compile Include="Functions\Text.cs" />
-    <Compile Include="ParsedExpressionHelper.cs" />
+    <Compile Include="ExpressionHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceProvider.cs" />
   </ItemGroup>
