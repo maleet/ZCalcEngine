@@ -103,6 +103,9 @@ namespace Zirpl.CalcEngine.Tests
             
             engine.Test("XLOOKUP('07', Array('06', '05', '04'), Array('25', '26', \r\n'27'), '20'\n)", "20");
             engine.Test("XLOOKUP('07', Array('06', '05', '04'), Array('25' /* 0068 */, '26', '27'), '20')", "20");
+            
+            engine.Test("XLOOKUP(7, Array(Range(4, 5), Range(6, 8), Range(9, 10)), Array('25', '26', '27'), '20')", "26");
+            engine.Test("XLOOKUP(7, Array(Array(4, 5, 7), Array(6, 8), Array(9, 10)), Array('25', '26', '27'), '20')", "25");
         }
 
         [Test]

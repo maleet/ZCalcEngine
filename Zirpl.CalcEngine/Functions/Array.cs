@@ -126,11 +126,16 @@ namespace Zirpl.CalcEngine
                 {
                     search = search.TryConvertToDouble();
                 }
-                
+               
                 var ix = keys.FindIndex(o =>
                 {
                     if (isNumber)
                     {
+                        if (o is IList)
+                        {
+                            return ((IList) o).Contains(search);
+                        }
+                        
                         return Equals(o?.TryConvertToDouble(), search);
                     }
                     return Equals(o, search);

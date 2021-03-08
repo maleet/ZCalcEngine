@@ -1,2 +1,2 @@
-﻿$version = "2021.3.1" 
+﻿$version = "2021.3.2" 
 .\NuGet.exe pack .\Zirpl.CalcEngine.nuspec -Version $version
