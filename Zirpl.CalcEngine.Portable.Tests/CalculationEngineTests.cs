@@ -97,7 +97,12 @@ namespace Zirpl.CalcEngine.Tests
             engine.Variables.Add("dec1", 4.5M);
             engine.Variables.Add("doub1", 4.5);
             engine.Test("XLOOKUP(dec1, Array(doub1, 5, 6), Array(7, 8, 9), 0)", 7);
+
+            engine.Options.Functions.ContainsTrimStartChars = new List<char>() {'0'};
+            engine.Test("1.2+IF((Contains('0018;0004;0014;0049', '18') && Contains('0092', '92')), 1, 0)+IF((Contains('0008', '0008') && Contains('0105', '105')), 1.5, 0)", 3.7);
             
+            engine.Test("XLOOKUP('07', Array('06', '05', '04'), Array('25', '26', \r\n'27'), '20'\n)", "20");
+            engine.Test("XLOOKUP('07', Array('06', '05', '04'), Array('25' /* 0068 */, '26', '27'), '20')", "20");
         }
 
         [Test]

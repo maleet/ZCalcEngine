@@ -85,6 +85,7 @@ namespace Zirpl.CalcEngine
         /// <returns>An <see cref="Expression"/> object that can be evaluated.</returns>
         public Expression Parse(string expression)
         {
+            expression = CleanUp(expression);
             // initialize
             _expr = expression;
             _len = _expr.Length;
@@ -113,6 +114,11 @@ namespace Zirpl.CalcEngine
 
             // done
             return expr;
+        }
+
+        private string CleanUp(string expression)
+        {
+            return Regex.Replace(expression, @"/\*(.*?)\*/", "");
         }
 
         /// <summary>
