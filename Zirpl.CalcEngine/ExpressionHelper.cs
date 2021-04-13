@@ -9,7 +9,7 @@ namespace Zirpl.CalcEngine
 {
     public static class ExpressionHelper
     {
-        internal static string ParseBindings(Expression expression, string expressionString, CalculationOptions calculationOptions)
+        internal static string ParseBindings(Expression expression, string expressionString, CalculationOptions calculationOptions, object result)
         {
             List<string> list = new List<string>
             {
@@ -18,8 +18,15 @@ namespace Zirpl.CalcEngine
                 ParseAsVariable(expressionString, expression, calculationOptions), 
                 ParseAsBinary(expressionString, expression, calculationOptions)
             };
+            
+            var replace = string.Join(", ", list.Where(s => !string.IsNullOrEmpty(s))).Replace("**", "*");
+            var value = GetResult(result);
+            if (!replace.EndsWith(value))
+            {
+                replace = "(" + replace + ")" + value;
+            }
 
-            return string.Join(", ", list.Where(s => !string.IsNullOrEmpty(s))).Replace("**", "*");
+            return replace;
         }
 
         private static string ParseAsFunction(string expressionString, Expression expression, CalculationOptions calculationOptions)
@@ -34,7 +41,7 @@ namespace Zirpl.CalcEngine
                     list.Add(ParseAsBinding(expressionString, functionExpressionParam, calculationOptions));
                     list.Add(ParseAsVariable(expressionString, functionExpressionParam, calculationOptions));
                 }
-                return methodName + "(" + string.Join(", ", list.Where(s => !string.IsNullOrEmpty(s)))+")" + "/*{" + FormatAsType(functionExpression.Value) + "}*/";
+                return methodName + "(" + string.Join(", ", list.Where(s => !string.IsNullOrEmpty(s)))+")" + GetResult(functionExpression.Value);
             }
 
             return null;
@@ -99,6 +106,11 @@ namespace Zirpl.CalcEngine
             return null;
         }
 
+        private static string GetResult(object functionExpressionValue)
+        {
+            return "/*{" + FormatAsType(functionExpressionValue) + "}*/";
+        }
+
         private static string FormatAsType(object variableExpressionValue)
         {
             if (variableExpressionValue is string)
@@ -116,7 +128,7 @@ namespace Zirpl.CalcEngine
             }
             return variableExpressionValue?.ToString();
         }
-        
+
         public static Dictionary<string, object> GetBindingValues(Expression expression)
         {
             Dictionary<string, object> objects = new Dictionary<string, object>();

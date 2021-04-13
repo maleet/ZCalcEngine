@@ -148,7 +148,7 @@ namespace Zirpl.CalcEngine
             if (logBindingExpressionValues)
             {
                 ContextBindings = ExpressionHelper.GetBindingValues(x);
-                ParsedExpression = ExpressionHelper.ParseBindings(x, expression, Options);
+                ParsedExpression = ExpressionHelper.ParseBindings(x, expression, Options, o);
             }
 
             return o;
