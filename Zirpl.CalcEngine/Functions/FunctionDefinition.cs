@@ -9,21 +9,25 @@ namespace Zirpl.CalcEngine
     /// </summary>
     public class FunctionDefinition
     {
+        public string FunctionName { get; }
+
         // ** fields
         public int ParmMin, ParmMax;
         public CalcEngineFunction Function;
         public CalcEngineContextFunction ContextFunction;
 
         // ** ctor
-        public FunctionDefinition(int parmMin, int parmMax, CalcEngineFunction function)
+        public FunctionDefinition(int parmMin, int parmMax, CalcEngineFunction function, string functionName)
         {
+            FunctionName = functionName;
             ParmMin = parmMin;
             ParmMax = parmMax;
             Function = function;
         }
         
-        public FunctionDefinition(int parmMin, int parmMax, CalcEngineContextFunction function)
+        public FunctionDefinition(int parmMin, int parmMax, CalcEngineContextFunction function, string functionName)
         {
+            FunctionName = functionName;
             ParmMin = parmMin;
             ParmMax = parmMax;
             ContextFunction = function;

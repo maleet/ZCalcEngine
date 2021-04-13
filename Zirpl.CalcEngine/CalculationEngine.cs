@@ -148,7 +148,7 @@ namespace Zirpl.CalcEngine
             if (logBindingExpressionValues)
             {
                 ContextBindings = ExpressionHelper.GetBindingValues(x);
-                ParsedExpression = ExpressionHelper.ParseBindings(x, expression);
+                ParsedExpression = ExpressionHelper.ParseBindings(x, expression, Options);
             }
 
             return o;
@@ -286,7 +286,7 @@ namespace Zirpl.CalcEngine
         /// <param name="fn">Delegate that evaluates the function.</param>
         public void RegisterFunction(string functionName, int parmMin, int parmMax, CalcEngineFunction fn)
         {
-            _fnTbl.Add(functionName, new FunctionDefinition(parmMin, parmMax, fn));
+            _fnTbl.Add(functionName, new FunctionDefinition(parmMin, parmMax, fn, functionName));
         }
 
         /// <summary>
@@ -302,7 +302,7 @@ namespace Zirpl.CalcEngine
 
         public void RegisterFunction(string functionName, int parmMin, int parmMax, CalcEngineContextFunction fn)
         {
-            _fnTbl.Add(functionName, new FunctionDefinition(parmMin, parmMax, fn));
+            _fnTbl.Add(functionName, new FunctionDefinition(parmMin, parmMax, fn, functionName));
         }
 
         public void RegisterFunction(string functionName, int parmCount, CalcEngineContextFunction fn)
@@ -1077,6 +1077,7 @@ namespace Zirpl.CalcEngine
     public class CalculationOptions
     {
         public FunctionOptions Functions { get; set; } = new FunctionOptions();
+        public List<string> SkippedVariablesForParsing { get; set; } = new List<string>();
 
         public class FunctionOptions
         {

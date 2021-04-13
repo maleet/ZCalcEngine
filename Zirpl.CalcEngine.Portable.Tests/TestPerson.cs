@@ -95,6 +95,8 @@ namespace Zirpl.CalcEngine.Tests
 	    public string Code { get; set; }
 
 	    public Guid Id { get; set; }
+
+	    public Dictionary<string, object> Specs { get; set; } = new Dictionary<string, object>();
     }
 
 	public class Address

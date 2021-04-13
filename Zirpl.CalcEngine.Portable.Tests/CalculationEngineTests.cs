@@ -41,7 +41,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("Number1", 55);
             engine.Test("Max(Number1, 5,33)", 55);
             engine.Test("Max(Number1, 5.33)", 55);
-            engine.Test("Min(Number1, 5,88, Decimal)", 4.5M, "Min(55, 5,88, 4,5)");
+            engine.Test("Min(Number1, 5,88, Decimal)", 4.5M, "MIN(55, 5, 88, 4.5)/*{4.5}*/");
 
             Assert.That(new double[] {0, 1, 2, 3}, Is.EquivalentTo(engine.Evaluate("Range(0, 3)") as IEnumerable));
             Assert.That(new double[] {0, 100, 200}, Is.EquivalentTo(engine.Evaluate("Range(0, 200, 100)") as IEnumerable));
@@ -88,22 +88,22 @@ namespace Zirpl.CalcEngine.Tests
             engine.Options.Functions.ContainsTrimStartChars = new List<char>();
             engine.Test("Contains('04;09;7;92;!08', '0092')", false);
             engine.Test("Contains('04;09;7;0092;!08', '92')", false);
-            
+
             engine.Test("XLOOKUP('06', Array('06', '05', '04'), Array('25', '26', '27'), '20')", "25");
             engine.Test("XLOOKUP('04', Array('06', '05', '04'), Array('25', '26', '27'), '20')", "27");
             engine.Test("XLOOKUP('04', Array('06', '05', '04'), Array(25, 26, 27), '20')", 27);
             engine.Test("XLOOKUP('07', Array('06', '05', '04'), Array('25', '26', '27'), '20')", "20");
-            
+
             engine.Variables.Add("dec1", 4.5M);
             engine.Variables.Add("doub1", 4.5);
             engine.Test("XLOOKUP(dec1, Array(doub1, 5, 6), Array(7, 8, 9), 0)", 7);
 
             engine.Options.Functions.ContainsTrimStartChars = new List<char>() {'0'};
             engine.Test("1.2+IF((Contains('0018;0004;0014;0049', '18') && Contains('0092', '92')), 1, 0)+IF((Contains('0008', '0008') && Contains('0105', '105')), 1.5, 0)", 3.7);
-            
+
             engine.Test("XLOOKUP('07', Array('06', '05', '04'), Array('25', '26', \r\n'27'), '20'\n)", "20");
             engine.Test("XLOOKUP('07', Array('06', '05', '04'), Array('25' /* 0068 */, '26', '27'), '20')", "20");
-            
+
             engine.Test("XLOOKUP(7, Array(Range(4, 5), Range(6, 8), Range(9, 10)), Array('25', '26', '27'), '20')", "26");
             engine.Test("XLOOKUP(7, Array(Array(4, 5, 7), Array(6, 8), Array(9, 10)), Array('25', '26', '27'), '20')", "25");
         }
@@ -121,13 +121,27 @@ namespace Zirpl.CalcEngine.Tests
             p.Parent = TestPerson.CreateTestPerson();
             engine.DataContext = p;
 
+            engine.Variables.Add("sp", 1);
+
+            var s = @"3600 / (1sp * XLOOKUP( CONCATENATE(Specs('jaty'), '-', IF( Number(Specs('jawd')) >= 0068 && Number(Specs('jawd')) < 0110, '68/110', IF(Number(Specs('jawd')) >= 0110 && Number(Specs('jawd')) < 0150, '110/150', Specs('jawd') ) ), '-', IF(Contains('JH', Specs('jaap')), 'JH', 'JL'), '-', IF(Contains('PK;PH', Specs('jspe')), 'OV', 'VOL')), Array( '04-68/110-JL-VOL', '04-68/110-JL-OV', '04-68/110-JH-VOL', '04-68/110-JH-OV', '14-68/110-JL-VOL', '14-68/110-JL-OV', '14-68/110-JH-VOL', '14-68/110-JH-OV', '29-68/110-JL-VOL', '29-68/110-JL-OV', '29-68/110-JH-VOL', '29-68/110-JH-OV', '49-68/110-JL-VOL', '49-68/110-JL-OV', '49-68/110-JH-VOL', '49-68/110-JH-OV', '28-68/110-JL-VOL', '28-68/110-JL-OV', '28-68/110-JH-VOL', '28-68/110-JH-OV', '38-68/110-JL-VOL', '38-68/110-JL-OV', '38-68/110-JH-VOL', '38-68/110-JH-OV', '05-68/110-JL-VOL', '05-68/110-JL-OV', '05-68/110-JH-VOL', '05-68/110-JH-OV', '06-68/110-JL-VOL', '06-68/110-JL-OV', '06-68/110-JH-VOL', '06-68/110-JH-OV', '06-110/150-JL-VOL', '06-110/150-JL-OV', '06-110/150-JH-VOL', '06-110/150-JH-OV', '32-68/110-JL-VOL', '32-68/110-JL-OV', '32-68/110-JH-VOL', '32-68/110-JH-OV', '36-68/110-JL-VOL', '36-68/110-JL-OV', '36-68/110-JH-VOL', '36-68/110-JH-OV', '36-110/150-JL-VOL', '36-110/150-JL-OV', '36-110/150-JH-VOL', '36-110/150-JH-OV', '86-68/110-JL-VOL', '86-68/110-JL-OV', '86-68/110-JH-VOL', '86-68/110-JH-OV', 'C7-68/110-JL-VOL', 'C7-68/110-JL-OV', 'C7-68/110-JH-VOL', 'C7-68/110-JH-OV', 'C7-110/150-JL-VOL', 'C7-110/150-JL-OV', 'C7-110/150-JH-VOL', 'C7-110/150-JH-OV', '26-110/150-JL-VOL', '26-110/150-JL-OV', '26-110/150-JH-VOL', '26-110/150-JH-OV', '46-110/150-JL-VOL', '46-110/150-JL-OV', '46-110/150-JH-VOL', '46-110/150-JH-OV', '55-68/110-JL-VOL', '55-68/110-JL-OV', '55-68/110-JH-VOL', '55-68/110-JH-OV' ), Array( 38, 38, 47, 47, 38, 38, 47, 47, 38, 38, 47, 47, 38, 38, 47, 47, 38, 38, 47, 47, 38, 38, 47, 47, 39, 42, 35, 38, 39, 42, 35, 38, 37, 37, 41, 38, 39, 42, 35, 38, 39, 42, 35, 38, 37, 37, 41, 38, 39, 42, 35, 38, 39, 42, 35, 38, 37, 37, 41, 38, 37, 37, 41, 38, 37, 37, 41, 38, 39, 42, 35, 22 ), 38))";
+
+            p.Specs.Add("jaty", "04");
+            p.Specs.Add("jawd", "0092");
+            p.Specs.Add("jspe", "00");
+            p.Specs.Add("jaap", "JH");
+
+            engine.Test(s, 76.5957446808511M);
+            Assert.AreEqual("3600 / 1 * 1 * XLOOKUP(CONCATENATE('04', '-', IF('68/110', IF('110/150', Specs('jawd'))/*{}*/)/*{'68/110'}*/, '-', IF(CONTAINS('JH', 'JH')/*{True}*/, 'JH', 'JL')/*{'JH'}*/, '-', IF(CONTAINS('PK;PH', '00')/*{False}*/, 'OV', 'VOL')/*{'VOL'}*/)/*{'04-68/110-JH-VOL'}*/, ['04-68/110-JL-VOL', '04-68/110-JL-OV', '04-68/110-JH-VOL', '04-68/110-JH-OV', '14-68/110-JL-VOL', '14-68/110-JL-OV', '14-68/110-JH-VOL', '14-68/110-JH-OV', '29-68/110-JL-VOL', '29-68/110-JL-OV', '29-68/110-JH-VOL', '29-68/110-JH-OV', '49-68/110-JL-VOL', '49-68/110-JL-OV', '49-68/110-JH-VOL', '49-68/110-JH-OV', '28-68/110-JL-VOL', '28-68/110-JL-OV', '28-68/110-JH-VOL', '28-68/110-JH-OV', '38-68/110-JL-VOL', '38-68/110-JL-OV', '38-68/110-JH-VOL', '38-68/110-JH-OV', '05-68/110-JL-VOL', '05-68/110-JL-OV', '05-68/110-JH-VOL', '05-68/110-JH-OV', '06-68/110-JL-VOL', '06-68/110-JL-OV', '06-68/110-JH-VOL', '06-68/110-JH-OV', '06-110/150-JL-VOL', '06-110/150-JL-OV', '06-110/150-JH-VOL', '06-110/150-JH-OV', '32-68/110-JL-VOL', '32-68/110-JL-OV', '32-68/110-JH-VOL', '32-68/110-JH-OV', '36-68/110-JL-VOL', '36-68/110-JL-OV', '36-68/110-JH-VOL', '36-68/110-JH-OV', '36-110/150-JL-VOL', '36-110/150-JL-OV', '36-110/150-JH-VOL', '36-110/150-JH-OV', '86-68/110-JL-VOL', '86-68/110-JL-OV', '86-68/110-JH-VOL', '86-68/110-JH-OV', 'C7-68/110-JL-VOL', 'C7-68/110-JL-OV', 'C7-68/110-JH-VOL', 'C7-68/110-JH-OV', 'C7-110/150-JL-VOL', 'C7-110/150-JL-OV', 'C7-110/150-JH-VOL', 'C7-110/150-JH-OV', '26-110/150-JL-VOL', '26-110/150-JL-OV', '26-110/150-JH-VOL', '26-110/150-JH-OV', '46-110/150-JL-VOL', '46-110/150-JL-OV', '46-110/150-JH-VOL', '46-110/150-JH-OV', '55-68/110-JL-VOL', '55-68/110-JL-OV', '55-68/110-JH-VOL', '55-68/110-JH-OV'], [38, 38, 47, 47, 38, 38, 47, 47, 38, 38, 47, 47, 38, 38, 47, 47, 38, 38, 47, 47, 38, 38, 47, 47, 39, 42, 35, 38, 39, 42, 35, 38, 37, 37, 41, 38, 39, 42, 35, 38, 39, 42, 35, 38, 37, 37, 41, 38, 39, 42, 35, 38, 39, 42, 35, 38, 37, 37, 41, 38, 37, 37, 41, 38, 37, 37, 41, 38, 39, 42, 35, 22], 38)/*{47}*/", engine.ParsedExpression);
+
             engine.Test("Name", "Test Person");
             engine.Test("1h", 1D / 60);
 
             engine.Test("1mp*ChildrenDct('Test Child 2').Age", p.ChildrenDct["Test Child 2"].Age.Value);
-            
+
+            engine.Variables.Add("am", 1);
             engine.Test("HASH(Name)", "53A4E9EC08910DE9BB6EDAA99F8C867C");
             engine.Test("HASH('Name')", "49EE3087348E8D44E1FEDA1917443987");
+            engine.Test("CONCATENATE(am, HASH('Name'))", "149EE3087348E8D44E1FEDA1917443987");
             engine.Functions.Remove("CODE");
             Assert.IsTrue(engine.Validate<bool>("Code='Code'"));
             engine.Test("Parent.Name", "Test Person");
@@ -143,12 +157,7 @@ namespace Zirpl.CalcEngine.Tests
             engine.ThrowOnInvalidBindingExpression = false;
             engine.Test("ValueOr(ChildrenDct('NotExist').Number, 3) == 3", true);
             engine.ThrowOnInvalidBindingExpression = true;
-            Assert.Throws<CalcEngineBindingException>(() =>
-            {
-                engine.Test("ChildrenDct('NotExist').Number", true);
-            });
-            
-            //engine.Test("Contains(ArrayString(Specs('Level'), ';'), Item.Level) && Specs('Group').Value == 'M_SUPP'", true);
+            Assert.Throws<CalcEngineBindingException>(() => { engine.Test("ChildrenDct('NotExist').Number", true); });
 
             var ex = Assert.Throws<CalcEngineBindingException>(() =>
             {
@@ -333,7 +342,8 @@ namespace Zirpl.CalcEngine.Tests
             engine.Test("ATAN(PI()/4)", Math.Atan(Math.PI / 4));
             engine.Test("ATAN2(1,2)", Math.Atan2(1, 2));
             engine.Test("TANH(PI()/4)", Math.Tanh(Math.PI / 4));
-            engine.Test("Number('0.54')*2", 0.54*2);
+            engine.Test("Number('0.54')*2", 0.54 * 2);
+            engine.Test("Number('0092')", 92);
 
             // TEXT FUNCTION TESTS
             engine.Test("CHAR(65)", "A");

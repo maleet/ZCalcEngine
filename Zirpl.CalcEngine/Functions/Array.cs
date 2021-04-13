@@ -114,7 +114,7 @@ namespace Zirpl.CalcEngine
 
                 return objects.ToArray();
             });
-            ce.RegisterFunction("XLookup", 3, 4, parms =>
+            ce.RegisterFunction("XLOOKUP", 3, 4, parms =>
             {
                 var search = parms[0].Evaluate();
                 var keys = ((IEnumerable) parms[1].Evaluate()).Cast<object>().ToList();

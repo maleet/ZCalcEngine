@@ -10,15 +10,12 @@ namespace Zirpl.CalcEngine
     /// </summary>
     class FunctionExpression : Expression
     {
-        // ** fields
-        FunctionDefinition _fn;
+        protected internal FunctionDefinition _fn;
         public List<Expression> Parms { get; }
         private readonly CalculationEngine _engine;
 
-        // ** ctor
-        internal FunctionExpression()
-        {
-        }
+        protected internal object Value { get; set; }
+
         public FunctionExpression(FunctionDefinition function, List<Expression> parms, CalculationEngine engine)
         {
             _fn = function;
@@ -26,11 +23,13 @@ namespace Zirpl.CalcEngine
             _engine = engine;
         }
 
-        // ** object model
-        override public object Evaluate()
+        public override object Evaluate()
         {
-            return _fn.ContextFunction != null ? _fn.ContextFunction(_engine, Parms) : _fn.Function?.Invoke(Parms);
+            var fnContextFunction = _fn.ContextFunction != null ? _fn.ContextFunction(_engine, Parms) : _fn.Function?.Invoke(Parms);
+            Value = fnContextFunction;
+            return fnContextFunction;
         }
+
         public override Expression Optimize()
         {
             bool allLits = true;
